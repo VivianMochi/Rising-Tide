@@ -2,6 +2,7 @@
 
 #include "State.h"
 #include "ResourceManager.h"
+#include "PlayState.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -22,7 +23,7 @@ Game::Game() {
 	std::cout << "Debug messages are printed here:\n";
 
 	// Initial state
-	//changeState(new MenuState());
+	changeState(new PlayState());
 
 	// Set the cursor sprite
 	cursorSprite.setTexture(rm::loadTexture("Resource/Image/Cursor.png"));
