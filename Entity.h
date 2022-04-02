@@ -1,7 +1,8 @@
 #pragma once
 
-#include "State.h"
 #include <SFML/Graphics.hpp>
+
+class State;
 
 class Entity : public sf::Drawable, public sf::Transformable {
 public:

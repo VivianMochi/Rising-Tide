@@ -2,17 +2,22 @@
 
 #include "ResourceManager.h"
 #include "ColorManager.h"
+#include "Entity.h"
 
 void PlayState::init() {
+	initEntity(grid);
+	grid.setPosition(GRID_LEFT, getGame()->gameSize.y + 4);
+
 	// Load sprites
 	sun.setTexture(rm::loadTexture("Resource/Image/Sun.png"));
 	clouds.setTexture(rm::loadTexture("Resource/Image/Clouds.png"));
 	dunes.setTexture(rm::loadTexture("Resource/Image/Dunes.png"));
 	
 	// Load sounds
-	clear1.setBuffer(rm::loadSoundBuffer("Resource/Sound/Clear1.wav"));
-	clear2.setBuffer(rm::loadSoundBuffer("Resource/Sound/Clear2.wav"));
-	clear3.setBuffer(rm::loadSoundBuffer("Resource/Sound/Clear3.wav"));
+	soundDig.setBuffer(rm::loadSoundBuffer("Resource/Sound/Dig.wav"));
+	soundClear1.setBuffer(rm::loadSoundBuffer("Resource/Sound/Clear1.wav"));
+	soundClear2.setBuffer(rm::loadSoundBuffer("Resource/Sound/Clear2.wav"));
+	soundClear3.setBuffer(rm::loadSoundBuffer("Resource/Sound/Clear3.wav"));
 
 	// Load music
 	musicBase.openFromFile("Resource/Music/MusicBase.ogg");
@@ -40,11 +45,13 @@ void PlayState::gotEvent(sf::Event event) {
 	if (event.type == sf::Event::MouseButtonPressed) {
 		if (event.mouseButton.button == sf::Mouse::Left) {
 			phase = playing;
-			clear1.play();
+			if (grid.digPosition(getGame()->getCursorPosition() - grid.getPosition())) {
+				soundDig.play();
+			}
 		}
 		else if (event.mouseButton.button == sf::Mouse::Right) {
 			phase = menu;
-			clear3.play();
+			soundClear3.play();
 		}
 	}
 	if (event.type == sf::Event::KeyPressed) {
@@ -61,6 +68,14 @@ void PlayState::update(sf::Time elapsed) {
 		desiredY = -25;
 	}
 	cameraY += (desiredY - cameraY) * elapsed.asSeconds() * 2;
+
+	// Update grid
+	desiredY = getGame()->gameSize.y - 104;
+	if (phase == menu) {
+		desiredY = getGame()->gameSize.y + 4;
+	}
+	grid.move((sf::Vector2f(GRID_LEFT, desiredY) - grid.getPosition()) * elapsed.asSeconds() * 5.0f);
+	grid.update(elapsed);
 
 	// Update music
 	float volumeActive = 0;
@@ -87,6 +102,13 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(sun);
 	window.draw(clouds);
 	window.draw(dunes);
+
+	window.draw(grid);
+}
+
+void PlayState::initEntity(Entity &entity) {
+	entity.setState(this);
+	entity.init();
 }
 
 void PlayState::adjustMusicVolume(sf::Music &music, float desiredVolume, float factor) {

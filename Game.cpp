@@ -12,7 +12,7 @@
 
 Game::Game() {
 	// Define game info
-	gameName = "LD50";
+	gameName = "Rising Tide";
 	gameSize = { 240, 135 };
 	defaultScale = 4;
 
@@ -78,6 +78,15 @@ Game::Game() {
 
 		// Set the cursor position
 		cursorSprite.setPosition(std::round(getCursorPosition().x), std::round(getCursorPosition().y));
+
+		// v v v
+		// This is special for this game
+		int cursorSpriteIndex = 0;
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+			cursorSpriteIndex = 1;
+		}
+		cursorSprite.setTextureRect(sf::IntRect(cursorSpriteIndex * 10, 0, 10, 10));
+		// ^ ^ ^
 
 		if (state) {
 			state->update(elapsed);
