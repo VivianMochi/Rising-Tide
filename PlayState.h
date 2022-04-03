@@ -5,6 +5,7 @@
 #include "Grid.h"
 #include "Water.h"
 #include "BitmapText.h"
+#include "WaterBar.h"
 #include <SFML/Audio.hpp>
 
 const int GRID_LEFT = 70;
@@ -41,6 +42,7 @@ private:
 
 	sf::Sprite leftPane;
 	sf::Sprite rightPane;
+	WaterBar waterBar;
 
 	sf::Sprite sun;
 	sf::Sprite clouds;

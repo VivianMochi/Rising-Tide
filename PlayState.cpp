@@ -10,6 +10,8 @@ void PlayState::init() {
 
 	initEntity(water);
 
+	initEntity(waterBar);
+
 	// Load sprites
 	leftPane.setTexture(rm::loadTexture("Resource/Image/LeftPane.png"));
 	leftPane.setPosition(-71, 0);
@@ -92,10 +94,19 @@ void PlayState::gotEvent(sf::Event event) {
 		else if (event.key.code == sf::Keyboard::Escape) {
 			phase = menu;
 		}
+		else if (event.key.code == sf::Keyboard::O) {
+			cm::selectPalette(cm::getCurrentPalette() - 1);
+		}
+		else if (event.key.code == sf::Keyboard::L) {
+			cm::selectPalette(cm::getCurrentPalette() + 1);
+		}
 	}
 }
 
 void PlayState::update(sf::Time elapsed) {
+	// Update palette
+	cm::updatePalette(elapsed);
+
 	// Update camera position
 	float desiredY = 0;
 	if (phase == menu) {
@@ -123,6 +134,9 @@ void PlayState::update(sf::Time elapsed) {
 		desiredX = getGame()->gameSize.x;
 	}
 	rightPane.move((sf::Vector2f(desiredX, 0) - rightPane.getPosition()) * elapsed.asSeconds() * 5.0f);
+
+	waterBar.update(elapsed);
+	waterBar.setPosition(rightPane.getPosition());
 
 	// Update water
 	water.update(elapsed);
@@ -177,6 +191,7 @@ void PlayState::render(sf::RenderWindow &window) {
 
 	// Render right pane
 	window.draw(rightPane);
+	window.draw(waterBar);
 
 	window.draw(grid);
 

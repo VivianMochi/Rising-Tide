@@ -1,5 +1,6 @@
 #include "Game.h"
 
+#include "ColorManager.h"
 #include <cstdlib>
 #include <ctime>
 
@@ -7,6 +8,8 @@
 
 int main() {
 	std::srand(std::time(nullptr));
+
+	cm::init();
 
 	Game game;
 	return 0;
