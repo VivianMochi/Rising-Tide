@@ -47,8 +47,25 @@ void Grid::generateGrid(int jellyfish, int shells) {
 	}
 
 	// Place all shells
+	for (int s = 0; s < shells; s++) {
+		sf::Vector2i position = getEmptySquare();
+		squares[position.x][position.y]->inside = "shell";
+
+	}
 
 	// Place seaweed
+	for (int x = 0; x < GRID_WIDTH; x++) {
+		for (int y = 0; y < GRID_HEIGHT; y++) {
+			if (squares[x][y]) {
+				if (squares[x][y]->inside == "jelly") {
+					surroundWithSeaweed(sf::Vector2i(x, y));
+				}
+				else if (squares[x][y]->inside == "shell") {
+					surroundWithSeaweed(sf::Vector2i(x, y), true);
+				}
+			}
+		}
+	}
 
 	// Add tabs
 	for (int y = 0; y < GRID_HEIGHT; y++) {
@@ -167,6 +184,21 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	}
 }
 
+void Grid::surroundWithSeaweed(sf::Vector2i position, bool onlySome) {
+	// Add surrounding seaweed
+	for (int dx = -1; dx <= 1; dx++) {
+		for (int dy = -1; dy <= 1; dy++) {
+			int wx = position.x + dx;
+			int wy = position.y + dy;
+			if (isOnGrid(wx, wy) && squares[wx][wy] && squares[wx][wy]->inside == "") {
+				if (!onlySome || std::rand() % 4) {
+					squares[wx][wy]->inside = "weed";
+				}
+			}
+		}
+	}
+}
+
 sf::Vector2i Grid::getEmptySquare(bool preferBottom) {
 	for (int attempt = 0; attempt < 5; attempt++) {
 		sf::Vector2i output;
@@ -189,4 +221,13 @@ sf::Vector2i Grid::getEmptySquare(bool preferBottom) {
 
 sf::Vector2f Grid::getPositionForSquare(int x, int y) {
 	return sf::Vector2f(x * 10, y * 10);
+}
+
+bool Grid::isOnGrid(int x, int y) {
+	if (x >= 0 && x < GRID_WIDTH) {
+		if (y >= 0 && y < GRID_HEIGHT) {
+			return true;
+		}
+	}
+	return false;
 }

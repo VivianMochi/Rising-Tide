@@ -55,11 +55,15 @@ public:
 private:
 	virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 
+	// Surround the given position with seaweed
+	// If onlySome is true, there is a chance seaweed will be skipped
+	void surroundWithSeaweed(sf::Vector2i position, bool onlySome = false);
+
 	// Returns a random square with nothing inside it
 	// If preferBottom is chosen, there is a ~50% chance it will be on the bottom half of the grid
 	sf::Vector2i getEmptySquare(bool preferBottom = false);
-
 	sf::Vector2f getPositionForSquare(int x, int y);
+	bool isOnGrid(int x, int y);
 
 	std::vector<std::vector<std::shared_ptr<Square>>> squares;
 	std::vector<Tab> tabs;

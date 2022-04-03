@@ -4,6 +4,7 @@
 #include "Entity.h"
 #include "Grid.h"
 #include "Water.h"
+#include "BitmapText.h"
 #include <SFML/Audio.hpp>
 
 const int GRID_LEFT = 70;
@@ -25,10 +26,21 @@ public:
 private:
 	void adjustMusicVolume(sf::Music &music, float desiredVolume, float factor);
 
+	void loadLevel(int level);
+
 	float cameraY = -25;
+
+	int level = 0;
+	int jellies = 0;
+	int flags = 0;
+
+	std::string levelName = "";
 
 	Grid grid;
 	Water water;
+
+	sf::Sprite leftPane;
+	sf::Sprite rightPane;
 
 	sf::Sprite sun;
 	sf::Sprite clouds;

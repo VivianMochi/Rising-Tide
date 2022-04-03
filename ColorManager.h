@@ -5,5 +5,6 @@
 namespace cm {
 	sf::Color getSkyColor();
 	sf::Color getWaterColor();
+	sf::Color getTextColor();
 }
 
