@@ -5,6 +5,26 @@
 #include "Entity.h"
 
 void PlayState::init() {
+	initEntity(buttons);
+
+	// Build buttons
+	// This can definitely be cleaned up
+	buttonStart = std::make_shared<Button>("Start");
+	initEntity(*buttonStart);
+	buttons.addButton(buttonStart);
+	buttonExit = std::make_shared<Button>("Exit");
+	initEntity(*buttonExit);
+	buttons.addButton(buttonExit);
+	buttonSubmit = std::make_shared<Button>("Submit");
+	initEntity(*buttonSubmit);
+	buttons.addButton(buttonSubmit);
+	buttonShell = std::make_shared<Button>("Drain");
+	initEntity(*buttonShell);
+	buttons.addButton(buttonShell);
+	buttonMenu = std::make_shared<Button>("Menu");
+	initEntity(*buttonMenu);
+	buttons.addButton(buttonMenu);
+
 	initEntity(grid);
 	grid.setPosition(GRID_LEFT, getGame()->gameSize.y + 4);
 
@@ -54,17 +74,37 @@ void PlayState::init() {
 void PlayState::gotEvent(sf::Event event) {
 	if (event.type == sf::Event::MouseButtonPressed) {
 		if (event.mouseButton.button == sf::Mouse::Left) {
+			// Check buttons
+			std::string clickedButton = buttons.clickPosition(getGame()->getCursorPosition());
+
 			if (phase == menu) {
-				// Left click in menu
-				soundClear1.play();
-				phase = playing;
-				loadLevel(0);
+				if (clickedButton == "Start") {
+					soundClear1.play();
+					phase = playing;
+					if (level == -1) {
+						loadLevel(0);
+					}
+				}
+				else if (clickedButton == "Exit") {
+					getGame()->exit();
+				}
 			}
 			else if (phase == playing) {
-				// Left click in game
-				if (grid.digPosition(getGame()->getCursorPosition() - grid.getPosition())) {
-					soundDig.setPitch(0.8 + std::rand() % 40 / 100.0f);
-					soundDig.play();
+				if (clickedButton == "Submit") {
+
+				}
+				else if (clickedButton == "Drain") {
+
+				}
+				else if (clickedButton == "Menu") {
+					phase = menu;
+				}
+				else {
+					// Left click on board
+					if (grid.digPosition(getGame()->getCursorPosition() - grid.getPosition())) {
+						soundDig.setPitch(0.8 + std::rand() % 40 / 100.0f);
+						soundDig.play();
+					}
 				}
 			}
 		}
@@ -114,6 +154,13 @@ void PlayState::update(sf::Time elapsed) {
 	}
 	cameraY += (desiredY - cameraY) * elapsed.asSeconds() * 2;
 
+	// Update main menu pane
+	desiredY = -135;
+	if (phase == menu) {
+		desiredY = 0;
+	}
+	menuPaneY += (desiredY - menuPaneY) * elapsed.asSeconds() * 5;
+
 	// Update grid
 	desiredY = getGame()->gameSize.y - 104;
 	if (phase == menu) {
@@ -137,6 +184,14 @@ void PlayState::update(sf::Time elapsed) {
 
 	waterBar.update(elapsed);
 	waterBar.setPosition(rightPane.getPosition());
+
+	// Update buttons
+	buttonStart->setPosition(getGame()->gameSize.x / 2 - 55 / 2, menuPaneY + 87);
+	buttonExit->setPosition(getGame()->gameSize.x / 2 - 55 / 2, menuPaneY + 105);
+	buttonSubmit->setPosition(leftPane.getPosition() + sf::Vector2f(2, 44));
+	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 119));
+	buttonShell->setPosition(rightPane.getPosition() + sf::Vector2f(14, 44));
+	buttons.update(elapsed);
 
 	// Update water
 	water.update(elapsed);
@@ -178,7 +233,7 @@ void PlayState::render(sf::RenderWindow &window) {
 
 	// Render section title
 	text.setText(levelName);
-	text.setPosition(leftPane.getPosition() + sf::Vector2f(4, 4));
+	text.setPosition(leftPane.getPosition() + sf::Vector2f(36 - text.getWidth() / 2, 4));
 	window.draw(text);
 
 	// Jelly and flag counts
@@ -192,6 +247,7 @@ void PlayState::render(sf::RenderWindow &window) {
 	// Render right pane
 	window.draw(rightPane);
 	window.draw(waterBar);
+	window.draw(buttons);
 
 	window.draw(grid);
 

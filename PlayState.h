@@ -6,6 +6,7 @@
 #include "Water.h"
 #include "BitmapText.h"
 #include "WaterBar.h"
+#include "ButtonManager.h"
 #include <SFML/Audio.hpp>
 
 const int GRID_LEFT = 70;
@@ -30,12 +31,21 @@ private:
 	void loadLevel(int level);
 
 	float cameraY = -25;
+	float menuPaneY = 0;
 
-	int level = 0;
+	int level = -1;
 	int jellies = 0;
 	int flags = 0;
 
 	std::string levelName = "";
+
+	ButtonManager buttons;
+
+	std::shared_ptr<Button> buttonStart;
+	std::shared_ptr<Button> buttonExit;
+	std::shared_ptr<Button> buttonSubmit;
+	std::shared_ptr<Button> buttonShell;
+	std::shared_ptr<Button> buttonMenu;
 
 	Grid grid;
 	Water water;
