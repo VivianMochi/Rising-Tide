@@ -2,6 +2,8 @@
 
 #include "State.h"
 #include "ResourceManager.h"
+#include "ColorManager.h"
+#include "RenderAssist.h"
 
 void Grid::init() {
 	gridSprite.setTexture(rm::loadTexture("Resource/Image/Grid.png"));
@@ -23,6 +25,9 @@ void Grid::update(sf::Time elapsed) {
 	for (Tab &tab : tabs) {
 		tab.offsetX += (-12 - tab.offsetX) * elapsed.asSeconds() * 8;
 	}
+
+	// Update colors
+	gridSprite.setColor(cm::getUIColor());
 }
 
 void Grid::generateGrid(int jellyfish, int shells) {
@@ -149,6 +154,7 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	// Draw tabs
 	sf::Sprite tabSprite(rm::loadTexture("Resource/Image/Tabs.png"));
 	tabSprite.setTextureRect(sf::IntRect(0, 0, 12, 8));
+	tabSprite.setColor(cm::getJellyColor());
 	sf::Sprite numberSprite(rm::loadTexture("Resource/Image/Tabs.png"));
 	for (const Tab &tab : tabs) {
 		if (tab.offsetX < 0) {
@@ -157,6 +163,7 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 
 			numberSprite.setTextureRect(sf::IntRect(0, 8 * tab.number, 12, 8));
 			numberSprite.setPosition(tabSprite.getPosition());
+			numberSprite.setColor(cm::getFlashColor());
 			target.draw(numberSprite, states);
 		}
 	}
@@ -166,6 +173,7 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 
 	// Draw squares
 	sf::Sprite squareSprite(rm::loadTexture("Resource/Image/Squares.png"));
+	squareSprite.setColor(cm::getSandColor());
 	for (int x = 0; x < GRID_WIDTH; x++) {
 		for (int y = 0; y < GRID_HEIGHT; y++) {
 			if (squares[x][y]) {
@@ -177,23 +185,19 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 				}
 				else {
 					if (squares[x][y]->inside == "shell") {
-						squareSprite.setTextureRect(sf::IntRect(0, 10, 10, 10));
-						target.draw(squareSprite, states);
+						ra::renderShell(target, states, squares[x][y]->position);
 					}
 					else if (squares[x][y]->inside == "weed") {
-						squareSprite.setTextureRect(sf::IntRect(10, 10, 10, 10));
-						target.draw(squareSprite, states);
+						ra::renderWeed(target, states, squares[x][y]->position);
 					}
 					else if (squares[x][y]->inside == "jelly") {
-						squareSprite.setTextureRect(sf::IntRect(20, 10, 10, 10));
-						target.draw(squareSprite, states);
+						ra::renderJelly(target, states, squares[x][y]->position);
 					}
 				}
 
 				// Draw flag
 				if (squares[x][y]->flagged) {
-					squareSprite.setTextureRect(sf::IntRect(30, (squares[x][y]->dug ? 20 : 10), 10, 10));
-					target.draw(squareSprite, states);
+					ra::renderFlag(target, states, squares[x][y]->position, squares[x][y]->dug);
 				}
 			}
 		}

@@ -29,6 +29,7 @@ void Button::update(sf::Time elapsed) {
 	else {
 		buttonSprite.setTextureRect(sf::IntRect(0, 0, 55, 14));
 	}
+	buttonSprite.setColor(cm::getUIColor());
 }
 
 bool Button::clickPosition(sf::Vector2f position) {
@@ -50,7 +51,7 @@ void Button::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	BitmapText textSprite;
 	textSprite.setTexture(rm::loadTexture("Resource/Image/Font.png"));
 	if (!enabled) {
-		textSprite.setColor(cm::getPaletteColor(1));
+		textSprite.setColor(cm::getDisabledTextColor());
 	}
 	else {
 		textSprite.setColor(cm::getTextColor());

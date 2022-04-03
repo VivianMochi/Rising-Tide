@@ -63,9 +63,9 @@ void WaterBar::update(sf::Time elapsed) {
 	}
 
 	// Update colors
-	verticalBarSprite.setColor(cm::getPaletteColor(0));
-	verticalBarFrame.setColor(cm::getPaletteColor(1));
-	horizontalBarSprite.setColor(cm::getPaletteColor(0));
+	verticalBarSprite.setColor(cm::getUIColor());
+	verticalBarFrame.setColor(cm::getUIColor());
+	horizontalBarSprite.setColor(cm::getUIColor());
 }
 
 void WaterBar::resetSystem() {
@@ -134,7 +134,7 @@ void WaterBar::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 		}
 		blockSprite.setPosition(block.position);
 		if (i >= maxBlocks) {
-			blockSprite.setColor(cm::getPaletteColor(0));
+			blockSprite.setColor(cm::getTextColor());
 		}
 		else if (block.flashTime > 0 && flashTime < 0.1) {
 			blockSprite.setColor(cm::getFlashColor());
@@ -143,7 +143,7 @@ void WaterBar::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 			blockSprite.setColor(cm::getWaterColor());
 		}
 		else {
-			blockSprite.setColor(cm::getPaletteColor(2));
+			blockSprite.setColor(cm::getActiveUIElementColor());
 		}
 		target.draw(blockSprite, states);
 	}

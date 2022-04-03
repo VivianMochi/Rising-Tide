@@ -56,19 +56,70 @@ sf::Color cm::getPaletteColor(int index) {
 }
 
 sf::Color cm::getSkyColor() {
-	return getPaletteColor(6);
+	return getPaletteColor(3);
 }
 
 sf::Color cm::getWaterColor() {
-	return getPaletteColor(14);
+	return getPaletteColor(7);
 }
 
 sf::Color cm::getTextColor() {
-	return getPaletteColor(0);
+	sf::Color output = getUIColor();
+	int strength = 23;
+	output.r *= strength / 100.0f;
+	output.g *= strength / 100.0f;
+	output.b *= strength / 100.0f;
+	return output;
+}
+
+sf::Color cm::getDisabledTextColor() {
+	sf::Color output = getUIColor();
+	int strength = 57;
+	output.r *= strength / 100.0f;
+	output.g *= strength / 100.0f;
+	output.b *= strength / 100.0f;
+	return output;
+}
+
+sf::Color cm::getActiveUIElementColor() {
+	sf::Color output = getUIColor();
+	int strength = 73;
+	output.r *= strength / 100.0f;
+	output.g *= strength / 100.0f;
+	output.b *= strength / 100.0f;
+	return output;
 }
 
 sf::Color cm::getFlashColor() {
+	return getPaletteColor(1);
+}
+
+sf::Color cm::getShellColor() {
 	return getPaletteColor(4);
+}
+
+sf::Color cm::getWeedColor() {
+	return getPaletteColor(5);
+}
+
+sf::Color cm::getJellyColor() {
+	return getPaletteColor(6);
+}
+
+sf::Color cm::getFlagColor() {
+	return getShellColor();
+}
+
+sf::Color cm::getUIColor() {
+	return getSandColor();
+}
+
+sf::Color cm::getSandColor() {
+	return getPaletteColor(0);
+}
+
+sf::Color cm::getCloudColor() {
+	return getPaletteColor(2);
 }
 
 sf::Color cm::adjustColor(sf::Color input, sf::Color desired, float amount) {

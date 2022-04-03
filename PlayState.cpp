@@ -3,6 +3,7 @@
 #include "ResourceManager.h"
 #include "ColorManager.h"
 #include "Entity.h"
+#include "RenderAssist.h"
 
 void PlayState::init() {
 	initEntity(buttons);
@@ -158,7 +159,7 @@ void PlayState::gotEvent(sf::Event event) {
 
 		// DEBUG
 		if (event.key.code == sf::Keyboard::Num1) {
-			loadLevel(level);
+			cm::init();
 		}
 		else if (event.key.code == sf::Keyboard::Right) {
 			loadLevel(level + 1);
@@ -258,12 +259,14 @@ void PlayState::update(sf::Time elapsed) {
 		desiredX = -71;
 	}
 	leftPane.move((sf::Vector2f(desiredX, 0) - leftPane.getPosition()) * elapsed.asSeconds() * 5.0f);
+	leftPane.setColor(cm::getUIColor());
 
 	desiredX = getGame()->gameSize.x - 71;
 	if (phase == menu) {
 		desiredX = getGame()->gameSize.x;
 	}
 	rightPane.move((sf::Vector2f(desiredX, 0) - rightPane.getPosition()) * elapsed.asSeconds() * 5.0f);
+	rightPane.setColor(cm::getUIColor());
 
 	// Update water bar
 	waterBar.update(elapsed);
@@ -333,9 +336,13 @@ void PlayState::update(sf::Time elapsed) {
 
 	// Update background position
 	title.setPosition(getGame()->gameSize.x / 2 - 80 / 2, menuPaneY + 32);
+	title.setColor(cm::getWaterColor());
 	sun.setPosition(141, -1 - cameraY * 0.9);
+	sun.setColor(cm::getFlashColor());
 	clouds.setPosition(0, -25 - cameraY * 0.9);
+	clouds.setColor(cm::getCloudColor());
 	dunes.setPosition(0, -25 - cameraY);
+	dunes.setColor(cm::getSandColor());
 }
 
 void PlayState::render(sf::RenderWindow &window) {
@@ -354,7 +361,11 @@ void PlayState::render(sf::RenderWindow &window) {
 
 	// Render panes
 	window.draw(leftPane);
+	ra::renderJelly(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(3, 17));
+	ra::renderFlag(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(3, 31));
 	window.draw(rightPane);
+	ra::renderJelly(window, sf::RenderStates::Default, rightPane.getPosition() + sf::Vector2f(15, 17));
+	ra::renderShell(window, sf::RenderStates::Default, rightPane.getPosition() + sf::Vector2f(15, 31));
 
 	// Render section title
 	text.setText(levelName);

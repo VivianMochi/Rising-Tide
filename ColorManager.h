@@ -13,7 +13,16 @@ namespace cm {
 	sf::Color getSkyColor();
 	sf::Color getWaterColor();
 	sf::Color getTextColor();
+	sf::Color getDisabledTextColor();
+	sf::Color getActiveUIElementColor();
 	sf::Color getFlashColor();
+	sf::Color getShellColor();
+	sf::Color getWeedColor();
+	sf::Color getJellyColor();
+	sf::Color getFlagColor();
+	sf::Color getUIColor();
+	sf::Color getSandColor();
+	sf::Color getCloudColor();
 
 	sf::Color adjustColor(sf::Color input, sf::Color desired, float amount);
 	float adjustComponent(float input, float desired, float amount);

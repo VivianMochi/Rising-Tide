@@ -22,6 +22,7 @@ struct Square {
 	// The position to be rendered on the grid, affects click hitbox
 	sf::Vector2f position;
 	// The velocity of this square, affects position over time
+	// Currently unimplemented
 	sf::Vector2f velocity;
 };
 
