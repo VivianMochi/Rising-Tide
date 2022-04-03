@@ -8,6 +8,8 @@ void PlayState::init() {
 	initEntity(grid);
 	grid.setPosition(GRID_LEFT, getGame()->gameSize.y + 4);
 
+	initEntity(water);
+
 	// Load sprites
 	sun.setTexture(rm::loadTexture("Resource/Image/Sun.png"));
 	clouds.setTexture(rm::loadTexture("Resource/Image/Clouds.png"));
@@ -68,6 +70,12 @@ void PlayState::gotEvent(sf::Event event) {
 		if (event.key.code == sf::Keyboard::Num1) {
 			grid.generateGrid(10, 1);
 		}
+		else if (event.key.code == sf::Keyboard::Up) {
+			water.masterDepth += 10;
+		}
+		else if (event.key.code == sf::Keyboard::Down) {
+			water.masterDepth -= 10;
+		}
 	}
 }
 
@@ -86,6 +94,10 @@ void PlayState::update(sf::Time elapsed) {
 	}
 	grid.move((sf::Vector2f(GRID_LEFT, desiredY) - grid.getPosition()) * elapsed.asSeconds() * 5.0f);
 	grid.update(elapsed);
+
+	// Update water
+	water.update(elapsed);
+	water.setPosition(grid.getPosition() + sf::Vector2f(0, 100));
 
 	// Update music
 	float volumeActive = 0;
@@ -116,6 +128,8 @@ void PlayState::render(sf::RenderWindow &window) {
 	//window.draw(camp);
 
 	window.draw(grid);
+
+	window.draw(water);
 }
 
 void PlayState::initEntity(Entity &entity) {

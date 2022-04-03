@@ -6,7 +6,7 @@
 void Grid::init() {
 	gridSprite.setTexture(rm::loadTexture("Resource/Image/Grid.png"));
 
-	generateGrid(1, 1);
+	generateGrid(0, 0);
 }
 
 void Grid::update(sf::Time elapsed) {
