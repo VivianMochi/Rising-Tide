@@ -4,8 +4,16 @@
 #include "ColorManager.h"
 #include "Entity.h"
 #include "RenderAssist.h"
+#include <fstream>
 
 void PlayState::init() {
+	// Try to load save
+	std::ifstream saveFile("Save.txt");
+	if (saveFile.is_open()) {
+		saveFile >> best;
+	}
+	saveFile.close();
+
 	initEntity(buttons);
 
 	// Build buttons
@@ -479,6 +487,11 @@ void PlayState::findItem(std::string item, bool flagged) {
 			if (score > best) {
 				best = score;
 				bestFlashTime = 1;
+
+				// Save best to file
+				std::ofstream saveFile("Save.txt");
+				saveFile << best;
+				saveFile.close();
 			}
 			flashTime = 0;
 			scoreFlashTime = 1;
