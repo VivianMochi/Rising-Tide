@@ -10,6 +10,9 @@
 #include <SFML/Audio.hpp>
 
 const int GRID_LEFT = 70;
+const float SUBMIT_INTERVAL = 0.1;
+const float SUBMIT_INTERVAL_ITEM = 0.3;
+const float SUBMIT_INTERVAL_BREAK = 1;
 
 class PlayState : public State {
 public:
@@ -22,18 +25,29 @@ public:
 
 	enum {
 		menu,
-		playing
+		playing,
+		submitting,
+		results,
 	} phase = menu;
 
 private:
 	void adjustMusicVolume(sf::Music &music, float desiredVolume, float factor);
+	void playDigSound();
 
 	void loadLevel(int level);
+	// Do the effect of digging up an item, unless flagged is true
+	void findItem(std::string item, bool flagged = false);
+	void submit();
 
 	float cameraY = -25;
 	float menuPaneY = 0;
+
 	float flashTime = 0;
+	float flagFlashTime = 0;
 	float shellFlashTime = 0;
+
+	float submitTime = 0;
+	bool poppingFlags = false;
 
 	// Level stats
 	int level = -1;

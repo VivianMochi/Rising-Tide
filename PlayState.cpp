@@ -91,7 +91,7 @@ void PlayState::gotEvent(sf::Event event) {
 			}
 			else if (phase == playing) {
 				if (clickedButton == "Submit") {
-
+					submit();
 				}
 				else if (clickedButton == "Drain") {
 					if (shells > 0) {
@@ -112,16 +112,17 @@ void PlayState::gotEvent(sf::Event event) {
 					if (found != "none") {
 						waterBar.increment();
 
-						if (found == "jelly") {
-							waterBar.flood(3);
-						}
-						else if (found == "shell") {
-							shells += 1;
-						}
+						findItem(found);
 
-						soundDig.setPitch(0.8 + std::rand() % 40 / 100.0f);
-						soundDig.play();
+						playDigSound();
 					}
+				}
+			}
+			else if (phase == results) {
+				if (clickedButton == "Next") {
+					phase = playing;
+					loadLevel(level + 1);
+					buttonSubmit->text = "Submit";
 				}
 			}
 		}
@@ -130,16 +131,19 @@ void PlayState::gotEvent(sf::Event event) {
 				// Right click in game
 				int flagResult = grid.flagPosition(getGame()->getCursorPosition() - grid.getPosition(), flags == 0);
 				flags -= flagResult;
-				if (flagResult) {
+				if (flagResult != 0) {
 					soundClear1.play();
+					flashTime = 0;
+					flagFlashTime = 0.5;
 				}
 			}
-			
 		}
 	}
 	if (event.type == sf::Event::KeyPressed) {
 		if (event.key.code == sf::Keyboard::Escape) {
-			phase = menu;
+			if (phase == playing) {
+				phase = menu;
+			}
 		}
 
 		// DEBUG
@@ -170,6 +174,10 @@ void PlayState::update(sf::Time elapsed) {
 	if (shellFlashTime < 0) {
 		shellFlashTime = 0;
 	}
+	flagFlashTime -= elapsed.asSeconds();
+	if (flagFlashTime < 0) {
+		flagFlashTime = 0;
+	}
 
 	// Update camera position
 	float desiredY = 0;
@@ -184,6 +192,34 @@ void PlayState::update(sf::Time elapsed) {
 		desiredY = 0;
 	}
 	menuPaneY += (desiredY - menuPaneY) * elapsed.asSeconds() * 5;
+
+	// Do submission
+	if (phase == submitting) {
+		submitTime -= elapsed.asSeconds();
+		if (submitTime <= 0) {
+			std::string popped = grid.popSquare(poppingFlags);
+
+			findItem(popped, poppingFlags);
+			if (popped == "none") {
+				if (!poppingFlags) {
+					poppingFlags = true;
+					submitTime = SUBMIT_INTERVAL_BREAK;
+				}
+				else {
+					phase = results;
+					buttonSubmit->text = "Next";
+				}
+			}
+			else if (popped == "jelly" || popped == "shell") {
+				submitTime = SUBMIT_INTERVAL_ITEM;
+				playDigSound();
+			}
+			else {
+				submitTime = SUBMIT_INTERVAL;
+				playDigSound();
+			}
+		}
+	}
 
 	// Update grid
 	desiredY = getGame()->gameSize.y - 104;
@@ -214,9 +250,11 @@ void PlayState::update(sf::Time elapsed) {
 	buttonStart->setPosition(getGame()->gameSize.x / 2 - 55 / 2, menuPaneY + 87);
 	buttonExit->setPosition(getGame()->gameSize.x / 2 - 55 / 2, menuPaneY + 105);
 	buttonSubmit->setPosition(leftPane.getPosition() + sf::Vector2f(2, 44));
+	buttonSubmit->enabled = phase != submitting;
 	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 119));
+	buttonMenu->enabled = phase != submitting && phase != results;
 	buttonShell->setPosition(rightPane.getPosition() + sf::Vector2f(14, 44));
-	buttonShell->enabled = shells > 0;
+	buttonShell->enabled = shells > 0 && phase != submitting && phase != results;
 	buttons.update(elapsed);
 
 	// Update water
@@ -299,11 +337,18 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(text);
 	text.setText(std::to_string(flags));
 	text.setPosition(leftPane.getPosition() + sf::Vector2f(20, 32));
+	if (flagFlashTime > 0 && flashTime < 0.1) {
+		text.setColor(cm::getFlashColor());
+	}
+	else {
+		text.setColor(cm::getTextColor());
+	}
 	window.draw(text);
 
 	// Score counts
 	text.setText(std::to_string(best));
 	text.setPosition(rightPane.getPosition() + sf::Vector2f(40, 4));
+	text.setColor(cm::getTextColor());
 	window.draw(text);
 	text.setText(std::to_string(score));
 	text.setPosition(rightPane.getPosition() + sf::Vector2f(32, 18));
@@ -338,6 +383,11 @@ void PlayState::adjustMusicVolume(sf::Music &music, float desiredVolume, float f
 	music.setVolume(volume);
 }
 
+void PlayState::playDigSound() {
+	soundDig.setPitch(0.8 + std::rand() % 40 / 100.0f);
+	soundDig.play();
+}
+
 void PlayState::loadLevel(int level) {
 	this->level = level;
 
@@ -363,3 +413,26 @@ void PlayState::loadLevel(int level) {
 
 	grid.generateGrid(jellies, 2 + std::rand() % 3);
 }
+
+void PlayState::findItem(std::string item, bool flagged) {
+	if (item == "jelly") {
+		if (flagged) {
+			score += 1;
+		}
+		else {
+			waterBar.flood(3);
+		}
+	}
+	else if (item == "shell") {
+		shells += 1;
+		flashTime = 0;
+		shellFlashTime = 1;
+	}
+}
+
+void PlayState::submit() {
+	phase = submitting;
+	poppingFlags = false;
+	submitTime = SUBMIT_INTERVAL;
+}
+

@@ -50,7 +50,6 @@ void Grid::generateGrid(int jellyfish, int shells) {
 	for (int s = 0; s < shells; s++) {
 		sf::Vector2i position = getEmptySquare();
 		squares[position.x][position.y]->inside = "shell";
-
 	}
 
 	// Place seaweed
@@ -61,7 +60,8 @@ void Grid::generateGrid(int jellyfish, int shells) {
 					surroundWithSeaweed(sf::Vector2i(x, y));
 				}
 				else if (squares[x][y]->inside == "shell") {
-					surroundWithSeaweed(sf::Vector2i(x, y), true);
+					// In hindsight, surrounding shells with seaweed was kinda evil
+					//surroundWithSeaweed(sf::Vector2i(x, y), true);
 				}
 			}
 		}
@@ -127,6 +127,22 @@ int Grid::flagPosition(sf::Vector2f position, bool onlyRemove) {
 	return 0;
 }
 
+std::string Grid::popSquare(bool flagged) {
+	for (int y = 0; y < GRID_HEIGHT; y++) {
+		for (int x = 0; x < GRID_WIDTH; x++) {
+			if (squares[x][y]) {
+				if (!squares[x][y]->dug) {
+					if ((flagged && squares[x][y]->flagged) || (!flagged && !squares[x][y]->flagged)) {
+						squares[x][y]->dug = true;
+						return squares[x][y]->inside;
+					}
+				}
+			}
+		}
+	}
+	return "none";
+}
+
 void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	states.transform.translate(getPosition());
 
@@ -176,7 +192,7 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 
 				// Draw flag
 				if (squares[x][y]->flagged) {
-					squareSprite.setTextureRect(sf::IntRect(20, 20, 10, 10));
+					squareSprite.setTextureRect(sf::IntRect(30, (squares[x][y]->dug ? 20 : 10), 10, 10));
 					target.draw(squareSprite, states);
 				}
 			}

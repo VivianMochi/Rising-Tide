@@ -53,6 +53,11 @@ public:
 	// Returns 1 if a flag was placed, -1 if a flag was removed, or 0 if nothing happened
 	int flagPosition(sf::Vector2f position, bool onlyRemove);
 
+	// Pop open the top left unpopped grid square and return what was inside
+	// Flagged determines whether this only opens flagged squares or unflagged squares
+	// Will return "none" if there are no applicable grid squares left
+	std::string popSquare(bool flagged = false);
+
 private:
 	virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 
