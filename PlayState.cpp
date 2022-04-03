@@ -38,10 +38,10 @@ void PlayState::init() {
 	rightPane.setTexture(rm::loadTexture("Resource/Image/RightPane.png"));
 	rightPane.setPosition(getGame()->gameSize.x, 0);
 
+	title.setTexture(rm::loadTexture("Resource/Image/Title.png"));
 	sun.setTexture(rm::loadTexture("Resource/Image/Sun.png"));
 	clouds.setTexture(rm::loadTexture("Resource/Image/Clouds.png"));
 	dunes.setTexture(rm::loadTexture("Resource/Image/Dunes.png"));
-	camp.setTexture(rm::loadTexture("Resource/Image/Camp.png"));
 	
 	// Load sounds
 	soundDig.setBuffer(rm::loadSoundBuffer("Resource/Sound/Dig.wav"));
@@ -327,15 +327,15 @@ void PlayState::update(sf::Time elapsed) {
 			volumeWarning = 25;
 		}
 	}
-	adjustMusicVolume(musicActive, volumeActive, elapsed.asSeconds());
-	adjustMusicVolume(musicBeat, volumeBeat, elapsed.asSeconds());
-	adjustMusicVolume(musicWarning, volumeWarning, elapsed.asSeconds());
+	adjustMusicVolume(musicActive, volumeActive, elapsed.asSeconds() * 3);
+	adjustMusicVolume(musicBeat, volumeBeat, elapsed.asSeconds() * 3);
+	adjustMusicVolume(musicWarning, volumeWarning, elapsed.asSeconds() * 3);
 
 	// Update background position
+	title.setPosition(getGame()->gameSize.x / 2 - 80 / 2, menuPaneY + 32);
 	sun.setPosition(141, -1 - cameraY * 0.9);
 	clouds.setPosition(0, -25 - cameraY * 0.9);
 	dunes.setPosition(0, -25 - cameraY);
-	camp.setPosition(0, -4 -cameraY);
 }
 
 void PlayState::render(sf::RenderWindow &window) {
@@ -346,7 +346,7 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(sun);
 	window.draw(clouds);
 	window.draw(dunes);
-	//window.draw(camp);
+	window.draw(title);
 
 	BitmapText text;
 	text.setTexture(rm::loadTexture("Resource/Image/Font.png"));
@@ -435,7 +435,12 @@ void PlayState::loadLevel(int level) {
 
 	cm::selectPalette(level);
 
-	levelName = std::string("Section ") + char('A' + level);
+	if (level >= 26) {
+		levelName = std::string("Section ?");
+	}
+	else {
+		levelName = std::string("Section ") + char('A' + level);
+	}
 
 	int extraFlags = 5;
 	extraFlags -= level / 2;

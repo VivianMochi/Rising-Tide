@@ -77,11 +77,11 @@ private:
 	sf::Sprite leftPane;
 	sf::Sprite rightPane;
 	WaterBar waterBar;
-
+	
+	sf::Sprite title;
 	sf::Sprite sun;
 	sf::Sprite clouds;
 	sf::Sprite dunes;
-	sf::Sprite camp;
 
 	sf::Sound soundDig;
 	sf::Sound soundClear1;
