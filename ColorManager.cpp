@@ -18,8 +18,11 @@ void cm::init() {
 }
 
 void cm::selectPalette(int index, bool instant) {
-	if (index < 0 || index >= paletteSheet.getSize().y) {
+	if (index < 0) {
 		index = 0;
+	}
+	while (index >= paletteSheet.getSize().y) {
+		index -= paletteSheet.getSize().y;
 	}
 	currentPalette = index;
 

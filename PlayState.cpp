@@ -121,6 +121,10 @@ void PlayState::gotEvent(sf::Event event) {
 		}
 	}
 	if (event.type == sf::Event::KeyPressed) {
+		if (event.key.code == sf::Keyboard::Escape) {
+			phase = menu;
+		}
+
 		// DEBUG
 		if (event.key.code == sf::Keyboard::Num1) {
 			loadLevel(level);
@@ -131,14 +135,13 @@ void PlayState::gotEvent(sf::Event event) {
 		else if (event.key.code == sf::Keyboard::Down) {
 			water.masterDepth -= 10;
 		}
-		else if (event.key.code == sf::Keyboard::Escape) {
-			phase = menu;
+		else if (event.key.code == sf::Keyboard::Right) {
+			loadLevel(level + 1);
 		}
-		else if (event.key.code == sf::Keyboard::O) {
-			cm::selectPalette(cm::getCurrentPalette() - 1);
-		}
-		else if (event.key.code == sf::Keyboard::L) {
-			cm::selectPalette(cm::getCurrentPalette() + 1);
+		else if (event.key.code == sf::Keyboard::Left) {
+			if (level > 0) {
+				loadLevel(level - 1);
+			}
 		}
 	}
 }
@@ -267,6 +270,8 @@ void PlayState::adjustMusicVolume(sf::Music &music, float desiredVolume, float f
 
 void PlayState::loadLevel(int level) {
 	this->level = level;
+
+	cm::selectPalette(level);
 
 	levelName = std::string("Section ") + char('A' + level);
 
