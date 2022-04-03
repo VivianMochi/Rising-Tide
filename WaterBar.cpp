@@ -92,8 +92,8 @@ void WaterBar::increment(int amount) {
 	while (activeBlocks <= 0) {
 		for (WaterBlock &block : blocks) {
 			block.flashTime = 1;
-			flashTime = 0;
 		}
+		flashTime = 0;
 		activeBlocks += maxBlocks;
 		flood();
 	}
@@ -105,11 +105,13 @@ void WaterBar::flood(int amount) {
 		waterLevel = 10;
 	}
 	waterFlashTime = 1;
+	flashTime = 0;
 }
 
 void WaterBar::drain() {
 	waterLevel = 0;
 	waterFlashTime = 1;
+	flashTime = 0;
 }
 
 void WaterBar::draw(sf::RenderTarget &target, sf::RenderStates states) const {

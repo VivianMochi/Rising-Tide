@@ -28,6 +28,7 @@ public:
 		playing,
 		submitting,
 		results,
+		loss,
 	} phase = menu;
 
 private:
@@ -44,6 +45,8 @@ private:
 
 	float flashTime = 0;
 	float flagFlashTime = 0;
+	float scoreFlashTime = 0;
+	float bestFlashTime = 0;
 	float shellFlashTime = 0;
 
 	float submitTime = 0;

@@ -125,6 +125,16 @@ void PlayState::gotEvent(sf::Event event) {
 					buttonSubmit->text = "Submit";
 				}
 			}
+			else if (phase == loss) {
+				if (clickedButton == "Restart") {
+					phase = playing;
+					loadLevel(0);
+					buttonSubmit->text = "Submit";
+
+					score = 0;
+					shells = 0;
+				}
+			}
 		}
 		else if (event.mouseButton.button == sf::Mouse::Right) {
 			if (phase == playing) {
@@ -169,6 +179,19 @@ void PlayState::update(sf::Time elapsed) {
 	flashTime += elapsed.asSeconds();
 	if (flashTime >= 0.2) {
 		flashTime = 0;
+		
+		// This is a hacky way to get the water bar to constantly flash upon losing
+		if (phase == loss) {
+			waterBar.flood();
+		}
+	}
+	bestFlashTime -= elapsed.asSeconds();
+	if (bestFlashTime < 0) {
+		bestFlashTime = 0;
+	}
+	scoreFlashTime -= elapsed.asSeconds();
+	if (scoreFlashTime < 0) {
+		scoreFlashTime = 0;
 	}
 	shellFlashTime -= elapsed.asSeconds();
 	if (shellFlashTime < 0) {
@@ -245,6 +268,13 @@ void PlayState::update(sf::Time elapsed) {
 	// Update water bar
 	waterBar.update(elapsed);
 	waterBar.setPosition(rightPane.getPosition());
+	// Check for game loss
+	// Theoretically, this should happen whenever the water level goes up,
+	// but that can happen in a few places so I'm just putting it here
+	if ((phase == playing || phase == submitting) && waterBar.waterLevel >= 10) {
+		phase = loss;
+		buttonSubmit->text = "Restart";
+	}
 
 	// Update buttons
 	buttonStart->setPosition(getGame()->gameSize.x / 2 - 55 / 2, menuPaneY + 87);
@@ -252,9 +282,9 @@ void PlayState::update(sf::Time elapsed) {
 	buttonSubmit->setPosition(leftPane.getPosition() + sf::Vector2f(2, 44));
 	buttonSubmit->enabled = phase != submitting;
 	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 119));
-	buttonMenu->enabled = phase != submitting && phase != results;
+	buttonMenu->enabled = phase != submitting && phase != results && phase != loss;
 	buttonShell->setPosition(rightPane.getPosition() + sf::Vector2f(14, 44));
-	buttonShell->enabled = shells > 0 && phase != submitting && phase != results;
+	buttonShell->enabled = shells > 0 && phase != submitting && phase != results && phase != loss;
 	buttons.update(elapsed);
 
 	// Update water
@@ -348,10 +378,22 @@ void PlayState::render(sf::RenderWindow &window) {
 	// Score counts
 	text.setText(std::to_string(best));
 	text.setPosition(rightPane.getPosition() + sf::Vector2f(40, 4));
-	text.setColor(cm::getTextColor());
+	if (bestFlashTime > 0 && flashTime < 0.1) {
+		text.setColor(cm::getFlashColor());
+	}
+	else {
+		text.setColor(cm::getTextColor());
+	}
 	window.draw(text);
+
 	text.setText(std::to_string(score));
 	text.setPosition(rightPane.getPosition() + sf::Vector2f(32, 18));
+	if (scoreFlashTime > 0 && flashTime < 0.1) {
+		text.setColor(cm::getFlashColor());
+	}
+	else {
+		text.setColor(cm::getTextColor());
+	}
 	window.draw(text);
 
 	text.setText(std::to_string(shells));
@@ -418,6 +460,12 @@ void PlayState::findItem(std::string item, bool flagged) {
 	if (item == "jelly") {
 		if (flagged) {
 			score += 1;
+			if (score > best) {
+				best = score;
+				bestFlashTime = 1;
+			}
+			flashTime = 0;
+			scoreFlashTime = 1;
 		}
 		else {
 			waterBar.flood(3);
