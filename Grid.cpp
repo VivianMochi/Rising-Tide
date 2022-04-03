@@ -6,6 +6,29 @@
 void Grid::init() {
 	gridSprite.setTexture(rm::loadTexture("Resource/Image/Grid.png"));
 
+	generateGrid(1, 1);
+}
+
+void Grid::update(sf::Time elapsed) {
+	// Update squares
+	for (int x = 0; x < GRID_WIDTH; x++) {
+		for (int y = 0; y < GRID_HEIGHT; y++) {
+			if (squares[x][y]) {
+				// Nothing here yet
+			}
+		}
+	}
+
+	// Update tabs
+	for (Tab &tab : tabs) {
+		tab.offsetX += (-12 - tab.offsetX) * elapsed.asSeconds() * 8;
+	}
+}
+
+void Grid::generateGrid(int jellyfish, int shells) {
+	squares.clear();
+	tabs.clear();
+
 	// Fill grid
 	squares.resize(GRID_WIDTH);
 	for (int x = 0; x < GRID_WIDTH; x++) {
@@ -16,14 +39,32 @@ void Grid::init() {
 			squares[x][y]->position = getPositionForSquare(x, y);
 		}
 	}
-}
 
-void Grid::update(sf::Time elapsed) {
-	// Update squares
-	for (int x = 0; x < GRID_WIDTH; x++) {
-		for (int y = 0; y < GRID_HEIGHT; y++) {
+	// Place all jellies, leaning towards bottom of grid
+	for (int j = 0; j < jellyfish; j++) {
+		sf::Vector2i position = getEmptySquare(true);
+		squares[position.x][position.y]->inside = "jelly";
+	}
+
+	// Place all shells
+
+	// Place seaweed
+
+	// Add tabs
+	for (int y = 0; y < GRID_HEIGHT; y++) {
+		int jelliesInRow = 0;
+		for (int x = 0; x < GRID_WIDTH; x++) {
 			if (squares[x][y]) {
+				if (squares[x][y]->inside == "jelly") {
+					jelliesInRow += 1;
+				}
 			}
+		}
+		if (jelliesInRow > 0) {
+			tabs.emplace_back();
+			tabs.back().row = y;
+			tabs.back().number = jelliesInRow;
+			tabs.back().offsetX = y * 20;
 		}
 	}
 }
@@ -32,7 +73,7 @@ bool Grid::digPosition(sf::Vector2f position) {
 	for (int x = 0; x < GRID_WIDTH; x++) {
 		for (int y = 0; y < GRID_HEIGHT; y++) {
 			if (squares[x][y]) {
-				if (sf::FloatRect(squares[x][y]->position, sf::Vector2f(10, 10)).contains(position) && !squares[x][y]->dug) {
+				if (sf::FloatRect(squares[x][y]->position, sf::Vector2f(10, 10)).contains(position) && !squares[x][y]->dug && !squares[x][y]->flagged) {
 					squares[x][y]->dug = true;
 					return true;
 				}
@@ -42,9 +83,52 @@ bool Grid::digPosition(sf::Vector2f position) {
 	return false;
 }
 
+int Grid::flagPosition(sf::Vector2f position, bool onlyRemove) {
+	for (int x = 0; x < GRID_WIDTH; x++) {
+		for (int y = 0; y < GRID_HEIGHT; y++) {
+			if (squares[x][y]) {
+				if (sf::FloatRect(squares[x][y]->position, sf::Vector2f(10, 10)).contains(position) && !squares[x][y]->dug) {
+					if (onlyRemove) {
+						if (squares[x][y]->flagged) {
+							squares[x][y]->flagged = false;
+							return -1;
+						}
+					}
+					else {
+						squares[x][y]->flagged = !squares[x][y]->flagged;
+						if (squares[x][y]->flagged) {
+							return 1;
+						}
+						else {
+							return -1;
+						}
+					}
+				}
+			}
+		}
+	}
+	return 0;
+}
+
 void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	states.transform.translate(getPosition());
 
+	// Draw tabs
+	sf::Sprite tabSprite(rm::loadTexture("Resource/Image/Tabs.png"));
+	tabSprite.setTextureRect(sf::IntRect(0, 0, 12, 8));
+	sf::Sprite numberSprite(rm::loadTexture("Resource/Image/Tabs.png"));
+	for (const Tab &tab : tabs) {
+		if (tab.offsetX < 0) {
+			tabSprite.setPosition(tab.offsetX, tab.row * 10 + 1);
+			target.draw(tabSprite, states);
+
+			numberSprite.setTextureRect(sf::IntRect(0, 8 * tab.number, 12, 8));
+			numberSprite.setPosition(tabSprite.getPosition());
+			target.draw(numberSprite, states);
+		}
+	}
+
+	// Draw the base grid
 	target.draw(gridSprite, states);
 
 	// Draw squares
@@ -52,14 +136,55 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	for (int x = 0; x < GRID_WIDTH; x++) {
 		for (int y = 0; y < GRID_HEIGHT; y++) {
 			if (squares[x][y]) {
+				// Draw sand square
 				squareSprite.setPosition(squares[x][y]->position);
-				squareSprite.setTextureRect(sf::IntRect(squares[x][y]->spriteIndex * 10, 0, 10, 10));
 				if (!squares[x][y]->dug) {
+					squareSprite.setTextureRect(sf::IntRect(squares[x][y]->spriteIndex * 10, 0, 10, 10));
+					target.draw(squareSprite, states);
+				}
+				else {
+					if (squares[x][y]->inside == "shell") {
+						squareSprite.setTextureRect(sf::IntRect(0, 10, 10, 10));
+						target.draw(squareSprite, states);
+					}
+					else if (squares[x][y]->inside == "weed") {
+						squareSprite.setTextureRect(sf::IntRect(10, 10, 10, 10));
+						target.draw(squareSprite, states);
+					}
+					else if (squares[x][y]->inside == "jelly") {
+						squareSprite.setTextureRect(sf::IntRect(20, 10, 10, 10));
+						target.draw(squareSprite, states);
+					}
+				}
+
+				// Draw flag
+				if (squares[x][y]->flagged) {
+					squareSprite.setTextureRect(sf::IntRect(20, 20, 10, 10));
 					target.draw(squareSprite, states);
 				}
 			}
 		}
 	}
+}
+
+sf::Vector2i Grid::getEmptySquare(bool preferBottom) {
+	for (int attempt = 0; attempt < 5; attempt++) {
+		sf::Vector2i output;
+		if (preferBottom && std::rand() % 2) {
+			output.x = std::rand() % 10;
+			output.y = std::rand() % 5 + 5;
+		}
+		else {
+			output.x = std::rand() % 10;
+			output.y = std::rand() % 10;
+		}
+		if (squares[output.x][output.y] && squares[output.x][output.y]->inside == "") {
+			// This output is compliant, return it
+			return output;
+		}
+	}
+	// On failure, returns the top left corner
+	return sf::Vector2i(0, 0);
 }
 
 sf::Vector2f Grid::getPositionForSquare(int x, int y) {

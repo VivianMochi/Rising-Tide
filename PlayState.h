@@ -3,6 +3,7 @@
 #include "State.h"
 #include "Entity.h"
 #include "Grid.h"
+#include "Water.h"
 #include <SFML/Audio.hpp>
 
 const int GRID_LEFT = 70;
@@ -27,10 +28,12 @@ private:
 	float cameraY = -25;
 
 	Grid grid;
+	Water water;
 
 	sf::Sprite sun;
 	sf::Sprite clouds;
 	sf::Sprite dunes;
+	sf::Sprite camp;
 
 	sf::Sound soundDig;
 	sf::Sound soundClear1;

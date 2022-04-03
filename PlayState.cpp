@@ -12,6 +12,7 @@ void PlayState::init() {
 	sun.setTexture(rm::loadTexture("Resource/Image/Sun.png"));
 	clouds.setTexture(rm::loadTexture("Resource/Image/Clouds.png"));
 	dunes.setTexture(rm::loadTexture("Resource/Image/Dunes.png"));
+	camp.setTexture(rm::loadTexture("Resource/Image/Camp.png"));
 	
 	// Load sounds
 	soundDig.setBuffer(rm::loadSoundBuffer("Resource/Sound/Dig.wav"));
@@ -44,19 +45,28 @@ void PlayState::init() {
 void PlayState::gotEvent(sf::Event event) {
 	if (event.type == sf::Event::MouseButtonPressed) {
 		if (event.mouseButton.button == sf::Mouse::Left) {
+			if (phase == menu) {
+				soundClear1.play();
+			}
 			phase = playing;
 			if (grid.digPosition(getGame()->getCursorPosition() - grid.getPosition())) {
+				soundDig.setPitch(0.8 + std::rand() % 40 / 100.0f);
 				soundDig.play();
 			}
 		}
 		else if (event.mouseButton.button == sf::Mouse::Right) {
-			phase = menu;
-			soundClear3.play();
+			if (phase == playing) {
+				if (grid.flagPosition(getGame()->getCursorPosition() - grid.getPosition(), false)) {
+					soundClear1.play();
+				}
+			}
+			
 		}
 	}
 	if (event.type == sf::Event::KeyPressed) {
-		if (event.key.code == sf::Keyboard::F11) {
-			//setFullscreen(!fullscreen);
+		// DEBUG
+		if (event.key.code == sf::Keyboard::Num1) {
+			grid.generateGrid(10, 1);
 		}
 	}
 }
@@ -92,6 +102,7 @@ void PlayState::update(sf::Time elapsed) {
 	sun.setPosition(141, -1 - cameraY * 0.9);
 	clouds.setPosition(0, -25 - cameraY * 0.9);
 	dunes.setPosition(0, -25 - cameraY);
+	camp.setPosition(0, -4 -cameraY);
 }
 
 void PlayState::render(sf::RenderWindow &window) {
@@ -102,6 +113,7 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(sun);
 	window.draw(clouds);
 	window.draw(dunes);
+	//window.draw(camp);
 
 	window.draw(grid);
 }
