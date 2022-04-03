@@ -67,6 +67,10 @@ sf::Color cm::getTextColor() {
 	return getPaletteColor(0);
 }
 
+sf::Color cm::getFlashColor() {
+	return getPaletteColor(4);
+}
+
 sf::Color cm::adjustColor(sf::Color input, sf::Color desired, float amount) {
 	float r = adjustComponent(input.r, desired.r, amount);
 	float g = adjustComponent(input.g, desired.g, amount);

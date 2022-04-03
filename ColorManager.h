@@ -13,6 +13,7 @@ namespace cm {
 	sf::Color getSkyColor();
 	sf::Color getWaterColor();
 	sf::Color getTextColor();
+	sf::Color getFlashColor();
 
 	sf::Color adjustColor(sf::Color input, sf::Color desired, float amount);
 	float adjustComponent(float input, float desired, float amount);

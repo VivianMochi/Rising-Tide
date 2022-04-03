@@ -102,6 +102,8 @@ void PlayState::gotEvent(sf::Event event) {
 				else {
 					// Left click on board
 					if (grid.digPosition(getGame()->getCursorPosition() - grid.getPosition())) {
+						waterBar.increment();
+
 						soundDig.setPitch(0.8 + std::rand() % 40 / 100.0f);
 						soundDig.play();
 					}
@@ -128,12 +130,6 @@ void PlayState::gotEvent(sf::Event event) {
 		// DEBUG
 		if (event.key.code == sf::Keyboard::Num1) {
 			loadLevel(level);
-		}
-		else if (event.key.code == sf::Keyboard::Up) {
-			water.masterDepth += 10;
-		}
-		else if (event.key.code == sf::Keyboard::Down) {
-			water.masterDepth -= 10;
 		}
 		else if (event.key.code == sf::Keyboard::Right) {
 			loadLevel(level + 1);
@@ -185,6 +181,7 @@ void PlayState::update(sf::Time elapsed) {
 	}
 	rightPane.move((sf::Vector2f(desiredX, 0) - rightPane.getPosition()) * elapsed.asSeconds() * 5.0f);
 
+	// Update water bar
 	waterBar.update(elapsed);
 	waterBar.setPosition(rightPane.getPosition());
 
@@ -197,6 +194,7 @@ void PlayState::update(sf::Time elapsed) {
 	buttons.update(elapsed);
 
 	// Update water
+	water.masterDepth = waterBar.waterLevel * 10;
 	water.update(elapsed);
 	water.setPosition(grid.getPosition() + sf::Vector2f(0, 100));
 
@@ -283,7 +281,13 @@ void PlayState::loadLevel(int level) {
 
 	jellies = 10 + level;
 	flags = jellies + extraFlags;
-	water.masterDepth = 0;
+
+	int waterBlocks = 10 - level / 2;
+	if (waterBlocks < 2) {
+		waterBlocks = 2;
+	}
+	waterBar.setMaxBlocks(waterBlocks);
+	waterBar.resetSystem();
 
 	grid.generateGrid(jellies, 1);
 }
