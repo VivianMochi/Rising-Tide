@@ -23,6 +23,9 @@ void Water::update(sf::Time elapsed) {
 	for (int i = 0; i < segments.size(); i++) {
 		// Adjust for masterDepth
 		float thisDepth = masterDepth + 2 * std::sin(waveTime + i / 10.0f);
+
+		// I was trying to get the water to move like water but I couldn't get it to look right :(
+		/*
 		if (segments[i].depth < thisDepth) {
 			segments[i].depthVelocity += elapsed.asSeconds() * accelerationFactor;
 			if (segments[i].depthVelocity > velocityCap) {
@@ -44,6 +47,7 @@ void Water::update(sf::Time elapsed) {
 		}
 		segments[i].depthVelocity *= std::pow(0.75, elapsed.asSeconds());
 		segments[i].depth += segments[i].depthVelocity * elapsed.asSeconds();
+		*/
 		segments[i].depth = thisDepth;
 	}
 }

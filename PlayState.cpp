@@ -291,7 +291,7 @@ void PlayState::update(sf::Time elapsed) {
 	buttons.update(elapsed);
 
 	// Update water
-	water.masterDepth = waterBar.waterLevel * 10;
+	water.masterDepth += (waterBar.waterLevel * 10 - water.masterDepth) * elapsed.asSeconds() * 2;
 	water.update(elapsed);
 	water.setPosition(grid.getPosition() + sf::Vector2f(0, 100));
 
