@@ -44,8 +44,9 @@ public:
 	void generateGrid(int jellyfish, int shells = 1);
 
 	// Dig at the position relative to the grid
-	// Returns true if there was something to dig
-	bool digPosition(sf::Vector2f position);
+	// Returns what was inside
+	// Returns "none" if there was nothing to dig
+	std::string digPosition(sf::Vector2f position);
 
 	// Flag at the position relative to the grid
 	// onlyRemove will only allow the removal of existing flags, not place new ones

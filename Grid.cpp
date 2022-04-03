@@ -86,18 +86,18 @@ void Grid::generateGrid(int jellyfish, int shells) {
 	}
 }
 
-bool Grid::digPosition(sf::Vector2f position) {
+std::string Grid::digPosition(sf::Vector2f position) {
 	for (int x = 0; x < GRID_WIDTH; x++) {
 		for (int y = 0; y < GRID_HEIGHT; y++) {
 			if (squares[x][y]) {
 				if (sf::FloatRect(squares[x][y]->position, sf::Vector2f(10, 10)).contains(position) && !squares[x][y]->dug && !squares[x][y]->flagged) {
 					squares[x][y]->dug = true;
-					return true;
+					return squares[x][y]->inside;
 				}
 			}
 		}
 	}
-	return false;
+	return "none";
 }
 
 int Grid::flagPosition(sf::Vector2f position, bool onlyRemove) {

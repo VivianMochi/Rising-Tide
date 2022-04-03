@@ -94,15 +94,30 @@ void PlayState::gotEvent(sf::Event event) {
 
 				}
 				else if (clickedButton == "Drain") {
-
+					if (shells > 0) {
+						if (waterBar.waterLevel > 1) {
+							shells -= 1;
+							flashTime = 0;
+							shellFlashTime = 1;
+						}
+						waterBar.drain();
+					}
 				}
 				else if (clickedButton == "Menu") {
 					phase = menu;
 				}
 				else {
 					// Left click on board
-					if (grid.digPosition(getGame()->getCursorPosition() - grid.getPosition())) {
+					std::string found = grid.digPosition(getGame()->getCursorPosition() - grid.getPosition());
+					if (found != "none") {
 						waterBar.increment();
+
+						if (found == "jelly") {
+							waterBar.flood(3);
+						}
+						else if (found == "shell") {
+							shells += 1;
+						}
 
 						soundDig.setPitch(0.8 + std::rand() % 40 / 100.0f);
 						soundDig.play();
@@ -145,6 +160,16 @@ void PlayState::gotEvent(sf::Event event) {
 void PlayState::update(sf::Time elapsed) {
 	// Update palette
 	cm::updatePalette(elapsed);
+
+	// Update timers
+	flashTime += elapsed.asSeconds();
+	if (flashTime >= 0.2) {
+		flashTime = 0;
+	}
+	shellFlashTime -= elapsed.asSeconds();
+	if (shellFlashTime < 0) {
+		shellFlashTime = 0;
+	}
 
 	// Update camera position
 	float desiredY = 0;
@@ -191,6 +216,7 @@ void PlayState::update(sf::Time elapsed) {
 	buttonSubmit->setPosition(leftPane.getPosition() + sf::Vector2f(2, 44));
 	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 119));
 	buttonShell->setPosition(rightPane.getPosition() + sf::Vector2f(14, 44));
+	buttonShell->enabled = shells > 0;
 	buttons.update(elapsed);
 
 	// Update water
@@ -203,7 +229,35 @@ void PlayState::update(sf::Time elapsed) {
 	float volumeBeat = 0;
 	float volumeWarning = 0;
 	if (phase == playing) {
-		volumeActive = 100;
+		if (waterBar.waterLevel >= 3) {
+			volumeActive = 100;
+		}
+		else if (waterBar.waterLevel >= 2) {
+			volumeActive = 50;
+		}
+		else if (waterBar.waterLevel >= 1) {
+			volumeActive = 25;
+		}
+
+		if (waterBar.waterLevel >= 6) {
+			volumeBeat = 100;
+		}
+		else if (waterBar.waterLevel >= 5) {
+			volumeBeat = 50;
+		}
+		else if (waterBar.waterLevel >= 4) {
+			volumeBeat = 25;
+		}
+
+		if (waterBar.waterLevel >= 9) {
+			volumeWarning = 100;
+		}
+		else if (waterBar.waterLevel >= 8) {
+			volumeWarning = 50;
+		}
+		else if (waterBar.waterLevel >= 7) {
+			volumeWarning = 25;
+		}
 	}
 	adjustMusicVolume(musicActive, volumeActive, elapsed.asSeconds());
 	adjustMusicVolume(musicBeat, volumeBeat, elapsed.asSeconds());
@@ -226,11 +280,13 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(dunes);
 	//window.draw(camp);
 
-	// Render left pane
-	window.draw(leftPane);
 	BitmapText text;
 	text.setTexture(rm::loadTexture("Resource/Image/Font.png"));
 	text.setColor(cm::getTextColor());
+
+	// Render panes
+	window.draw(leftPane);
+	window.draw(rightPane);
 
 	// Render section title
 	text.setText(levelName);
@@ -245,8 +301,24 @@ void PlayState::render(sf::RenderWindow &window) {
 	text.setPosition(leftPane.getPosition() + sf::Vector2f(20, 32));
 	window.draw(text);
 
-	// Render right pane
-	window.draw(rightPane);
+	// Score counts
+	text.setText(std::to_string(best));
+	text.setPosition(rightPane.getPosition() + sf::Vector2f(40, 4));
+	window.draw(text);
+	text.setText(std::to_string(score));
+	text.setPosition(rightPane.getPosition() + sf::Vector2f(32, 18));
+	window.draw(text);
+
+	text.setText(std::to_string(shells));
+	text.setPosition(rightPane.getPosition() + sf::Vector2f(32, 32));
+	if (shellFlashTime > 0 && flashTime < 0.1) {
+		text.setColor(cm::getFlashColor());
+	}
+	else {
+		text.setColor(cm::getTextColor());
+	}
+	window.draw(text);
+
 	window.draw(waterBar);
 	window.draw(buttons);
 
@@ -289,5 +361,5 @@ void PlayState::loadLevel(int level) {
 	waterBar.setMaxBlocks(waterBlocks);
 	waterBar.resetSystem();
 
-	grid.generateGrid(jellies, 1);
+	grid.generateGrid(jellies, 2 + std::rand() % 3);
 }

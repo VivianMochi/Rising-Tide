@@ -13,6 +13,7 @@ public:
 	bool clickPosition(sf::Vector2f position);
 
 	std::string text = "";
+	bool enabled = true;
 
 private:
 	virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override;

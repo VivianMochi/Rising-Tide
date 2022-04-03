@@ -32,12 +32,19 @@ private:
 
 	float cameraY = -25;
 	float menuPaneY = 0;
+	float flashTime = 0;
+	float shellFlashTime = 0;
 
+	// Level stats
 	int level = -1;
 	int jellies = 0;
 	int flags = 0;
-
 	std::string levelName = "";
+
+	// Player stats
+	int best = 0;
+	int score = 0;
+	int shells = 0;
 
 	ButtonManager buttons;
 

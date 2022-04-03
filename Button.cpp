@@ -20,7 +20,10 @@ void Button::update(sf::Time elapsed) {
 	if (pressTime < 0) {
 		pressTime = 0;
 	}
-	if (pressTime > 0) {
+	if (!enabled) {
+		buttonSprite.setTextureRect(sf::IntRect(0, 28, 55, 14));
+	}
+	else if (pressTime > 0) {
 		buttonSprite.setTextureRect(sf::IntRect(0, 14, 55, 14));
 	}
 	else {
@@ -29,10 +32,12 @@ void Button::update(sf::Time elapsed) {
 }
 
 bool Button::clickPosition(sf::Vector2f position) {
-	sf::FloatRect hitBox(getPosition(), sf::Vector2f(55, 14));
-	if (hitBox.contains(position)) {
-		pressTime = 0.1;
-		return true;
+	if (enabled) {
+		sf::FloatRect hitBox(getPosition(), sf::Vector2f(55, 14));
+		if (hitBox.contains(position)) {
+			pressTime = 0.1;
+			return true;
+		}
 	}
 	return false;
 }
@@ -44,8 +49,13 @@ void Button::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 
 	BitmapText textSprite;
 	textSprite.setTexture(rm::loadTexture("Resource/Image/Font.png"));
-	textSprite.setColor(cm::getTextColor());
+	if (!enabled) {
+		textSprite.setColor(cm::getPaletteColor(1));
+	}
+	else {
+		textSprite.setColor(cm::getTextColor());
+	}
 	textSprite.setText(text);
-	textSprite.setPosition(55 / 2 - textSprite.getWidth() / 2, (pressTime > 0 ? 4 : 2));
+	textSprite.setPosition(55 / 2 - textSprite.getWidth() / 2, (pressTime > 0 || !enabled ? 4 : 2));
 	target.draw(textSprite, states);
 }

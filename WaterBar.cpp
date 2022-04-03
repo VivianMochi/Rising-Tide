@@ -109,7 +109,7 @@ void WaterBar::flood(int amount) {
 
 void WaterBar::drain() {
 	waterLevel = 0;
-	waterFlashTime = 0.5;
+	waterFlashTime = 1;
 }
 
 void WaterBar::draw(sf::RenderTarget &target, sf::RenderStates states) const {
