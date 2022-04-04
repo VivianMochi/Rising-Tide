@@ -84,9 +84,14 @@ private:
 	sf::Sprite dunes;
 
 	sf::Sound soundDig;
-	sf::Sound soundClear1;
-	sf::Sound soundClear2;
-	sf::Sound soundClear3;
+	sf::Sound soundFlag;
+	sf::Sound soundUnflag;
+	sf::Sound soundShellFind;
+	sf::Sound soundShellUse;
+	sf::Sound soundSelect;
+	sf::Sound soundError;
+	sf::Sound soundJelly;
+	sf::Sound soundScore;
 
 	sf::Music musicBase;
 	sf::Music musicActive;

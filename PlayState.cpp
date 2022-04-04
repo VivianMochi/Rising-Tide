@@ -6,11 +6,14 @@
 #include "RenderAssist.h"
 #include <fstream>
 
+#include <iostream>
+
 void PlayState::init() {
 	// Try to load save
 	std::ifstream saveFile("Save.txt");
 	if (saveFile.is_open()) {
 		saveFile >> best;
+		std::cout << "  Loaded high score: " << best << "\n";
 	}
 	saveFile.close();
 
@@ -54,9 +57,14 @@ void PlayState::init() {
 	
 	// Load sounds
 	soundDig.setBuffer(rm::loadSoundBuffer("Resource/Sound/Dig.wav"));
-	soundClear1.setBuffer(rm::loadSoundBuffer("Resource/Sound/Clear1.wav"));
-	soundClear2.setBuffer(rm::loadSoundBuffer("Resource/Sound/Clear2.wav"));
-	soundClear3.setBuffer(rm::loadSoundBuffer("Resource/Sound/Clear3.wav"));
+	soundFlag.setBuffer(rm::loadSoundBuffer("Resource/Sound/Flag.wav"));
+	soundUnflag.setBuffer(rm::loadSoundBuffer("Resource/Sound/Unflag.wav"));
+	soundShellFind.setBuffer(rm::loadSoundBuffer("Resource/Sound/ShellFind.wav"));
+	soundShellUse.setBuffer(rm::loadSoundBuffer("Resource/Sound/ShellUse.wav"));
+	soundSelect.setBuffer(rm::loadSoundBuffer("Resource/Sound/Select.wav"));
+	soundError.setBuffer(rm::loadSoundBuffer("Resource/Sound/Error.wav"));
+	soundJelly.setBuffer(rm::loadSoundBuffer("Resource/Sound/Jelly.wav"));
+	soundScore.setBuffer(rm::loadSoundBuffer("Resource/Sound/Score.wav"));
 
 	// Load music
 	musicBase.openFromFile("Resource/Music/MusicBase.ogg");
@@ -88,7 +96,7 @@ void PlayState::gotEvent(sf::Event event) {
 
 			if (phase == menu) {
 				if (clickedButton == "Start") {
-					soundClear1.play();
+					soundSelect.play();
 					phase = playing;
 					if (level == -1) {
 						loadLevel(0);
@@ -101,19 +109,26 @@ void PlayState::gotEvent(sf::Event event) {
 			else if (phase == playing) {
 				if (clickedButton == "Submit") {
 					submit();
+					soundSelect.play();
 				}
 				else if (clickedButton == "Drain") {
 					if (shells > 0) {
-						if (waterBar.waterLevel > 1) {
+						if (waterBar.waterLevel > 0) {
 							shells -= 1;
 							flashTime = 0;
 							shellFlashTime = 1;
+							soundShellUse.play();
+							soundSelect.play();
+						}
+						else {
+							soundError.play();
 						}
 						waterBar.drain();
 					}
 				}
 				else if (clickedButton == "Menu") {
 					phase = menu;
+					soundSelect.play();
 				}
 				else {
 					// Left click on board
@@ -132,6 +147,7 @@ void PlayState::gotEvent(sf::Event event) {
 					phase = playing;
 					loadLevel(level + 1);
 					buttonSubmit->text = "Submit";
+					soundSelect.play();
 				}
 			}
 			else if (phase == loss) {
@@ -139,6 +155,7 @@ void PlayState::gotEvent(sf::Event event) {
 					phase = playing;
 					loadLevel(0);
 					buttonSubmit->text = "Submit";
+					soundSelect.play();
 
 					score = 0;
 					shells = 0;
@@ -151,7 +168,12 @@ void PlayState::gotEvent(sf::Event event) {
 				int flagResult = grid.flagPosition(getGame()->getCursorPosition() - grid.getPosition(), flags == 0);
 				flags -= flagResult;
 				if (flagResult != 0) {
-					soundClear1.play();
+					if (flagResult > 0) {
+						soundFlag.play();
+					}
+					else {
+						soundUnflag.play();
+					}
 					flashTime = 0;
 					flagFlashTime = 0.5;
 				}
@@ -495,15 +517,19 @@ void PlayState::findItem(std::string item, bool flagged) {
 			}
 			flashTime = 0;
 			scoreFlashTime = 1;
+			soundScore.play();
 		}
 		else {
 			waterBar.flood(3);
+			getGame()->screenShakeTime = 0.05;
+			soundJelly.play();
 		}
 	}
 	else if (item == "shell") {
 		shells += 1;
 		flashTime = 0;
 		shellFlashTime = 1;
+		soundShellFind.play();
 	}
 }
 
