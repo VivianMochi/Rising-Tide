@@ -188,16 +188,18 @@ void PlayState::gotEvent(sf::Event event) {
 			}
 		}
 
-		// DEBUG
-		if (event.key.code == sf::Keyboard::Num1) {
-			cm::init();
-		}
-		else if (event.key.code == sf::Keyboard::Right) {
-			loadLevel(level + 1);
-		}
-		else if (event.key.code == sf::Keyboard::Left) {
-			if (level > 0) {
-				loadLevel(level - 1);
+		bool debugEnabled = false;
+		if (debugEnabled) {
+			if (event.key.code == sf::Keyboard::Num1) {
+				cm::init();
+			}
+			else if (event.key.code == sf::Keyboard::Right) {
+				loadLevel(level + 1);
+			}
+			else if (event.key.code == sf::Keyboard::Left) {
+				if (level > 0) {
+					loadLevel(level - 1);
+				}
 			}
 		}
 	}
