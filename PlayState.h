@@ -92,6 +92,7 @@ private:
 	sf::Sound soundError;
 	sf::Sound soundJelly;
 	sf::Sound soundScore;
+	sf::Sound soundStart;
 
 	sf::Music musicBase;
 	sf::Music musicActive;

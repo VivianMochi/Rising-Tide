@@ -65,6 +65,7 @@ void PlayState::init() {
 	soundError.setBuffer(rm::loadSoundBuffer("Resource/Sound/Error.wav"));
 	soundJelly.setBuffer(rm::loadSoundBuffer("Resource/Sound/Jelly.wav"));
 	soundScore.setBuffer(rm::loadSoundBuffer("Resource/Sound/Score.wav"));
+	soundStart.setBuffer(rm::loadSoundBuffer("Resource/Sound/Start.wav"));
 
 	// Load music
 	musicBase.openFromFile("Resource/Music/MusicBase.ogg");
@@ -96,7 +97,7 @@ void PlayState::gotEvent(sf::Event event) {
 
 			if (phase == menu) {
 				if (clickedButton == "Start") {
-					soundSelect.play();
+					soundStart.play();
 					phase = playing;
 					if (level == -1) {
 						loadLevel(0);
