@@ -31,6 +31,8 @@ struct Tab {
 	int row = 0;
 	// The number to display
 	int number = 0;
+	// If this tab's row is complete
+	bool complete = false;
 
 	// The x offset of the tab
 	// Anything > 0 is hidden, -12 is fully visible
@@ -65,6 +67,9 @@ private:
 	// Surround the given position with seaweed
 	// If onlySome is true, there is a chance seaweed will be skipped
 	void surroundWithSeaweed(sf::Vector2i position, bool onlySome = false);
+
+	// Check the grid state and complete any tabs 
+	void checkTabCompletion();
 
 	// Returns a random square with nothing inside it
 	// If preferBottom is chosen, there is a ~50% chance it will be on the bottom half of the grid

@@ -97,6 +97,7 @@ std::string Grid::digPosition(sf::Vector2f position) {
 			if (squares[x][y]) {
 				if (sf::FloatRect(squares[x][y]->position, sf::Vector2f(10, 10)).contains(position) && !squares[x][y]->dug && !squares[x][y]->flagged) {
 					squares[x][y]->dug = true;
+					checkTabCompletion();
 					return squares[x][y]->inside;
 				}
 			}
@@ -113,11 +114,13 @@ int Grid::flagPosition(sf::Vector2f position, bool onlyRemove) {
 					if (onlyRemove) {
 						if (squares[x][y]->flagged) {
 							squares[x][y]->flagged = false;
+							checkTabCompletion();
 							return -1;
 						}
 					}
 					else {
 						squares[x][y]->flagged = !squares[x][y]->flagged;
+						checkTabCompletion();
 						if (squares[x][y]->flagged) {
 							return 1;
 						}
@@ -139,6 +142,7 @@ std::string Grid::popSquare(bool flagged) {
 				if (!squares[x][y]->dug) {
 					if ((flagged && squares[x][y]->flagged) || (!flagged && !squares[x][y]->flagged)) {
 						squares[x][y]->dug = true;
+						checkTabCompletion();
 						return squares[x][y]->inside;
 					}
 				}
@@ -153,17 +157,28 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 
 	// Draw tabs
 	sf::Sprite tabSprite(rm::loadTexture("Resource/Image/Tabs.png"));
-	tabSprite.setTextureRect(sf::IntRect(0, 0, 12, 8));
-	tabSprite.setColor(cm::getJellyColor());
 	sf::Sprite numberSprite(rm::loadTexture("Resource/Image/Tabs.png"));
 	for (const Tab &tab : tabs) {
 		if (tab.offsetX < 0) {
 			tabSprite.setPosition(tab.offsetX, tab.row * 10 + 1);
+			if (tab.complete) {
+				tabSprite.setTextureRect(sf::IntRect(0, 8, 12, 8));
+				tabSprite.setColor(cm::getUIColor());
+			}
+			else {
+				tabSprite.setTextureRect(sf::IntRect(0, 0, 12, 8));
+				tabSprite.setColor(cm::getJellyColor());
+			}
 			target.draw(tabSprite, states);
 
-			numberSprite.setTextureRect(sf::IntRect(0, 8 * tab.number, 12, 8));
+			numberSprite.setTextureRect(sf::IntRect(0, 8 + 8 * tab.number, 12, 8));
 			numberSprite.setPosition(tabSprite.getPosition());
-			numberSprite.setColor(cm::getFlashColor());
+			if (tab.complete) {
+				numberSprite.setColor(cm::getDisabledTextColor());
+			}
+			else {
+				numberSprite.setColor(cm::getFlashColor());
+			}
 			target.draw(numberSprite, states);
 		}
 	}
@@ -215,6 +230,25 @@ void Grid::surroundWithSeaweed(sf::Vector2i position, bool onlySome) {
 					squares[wx][wy]->inside = "weed";
 				}
 			}
+		}
+	}
+}
+
+void Grid::checkTabCompletion() {
+	for (Tab &tab : tabs) {
+		tab.complete = true;
+		int jelliesFound = 0;
+		for (int x = 0; x < GRID_WIDTH; x++) {
+			if (squares[x][tab.row] && !squares[x][tab.row]->dug && !squares[x][tab.row]->flagged) {
+				tab.complete = false;
+			}
+			if (squares[x][tab.row] && squares[x][tab.row]->dug && squares[x][tab.row]->inside == "jelly") {
+				jelliesFound += 1;
+			}
+		}
+		if (jelliesFound >= tab.number) {
+			// All jellies were revealed, so the row is done
+			tab.complete = true;
 		}
 	}
 }
