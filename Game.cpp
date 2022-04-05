@@ -20,7 +20,17 @@ Game::Game() {
 	setFullscreen(false);
 
 	// Show the welcome message
-	std::cout << "Debug messages are printed here:\n";
+	std::cout << "\n  Welcome to Rising Tide!\n";
+	std::cout << "\n  Here are some tips for jelly hunting:\n";
+	std::cout << "    - Left click to dig, and right click to flag\n";
+	std::cout << "    - The row indicators tell how many jellies are in each row\n";
+	std::cout << "    - Seaweed means a jelly is nearby\n";
+	std::cout << "    - Water rises when you dig, and a lot if you dig a jelly\n";
+	std::cout << "    - Flooding the board is a game over!\n";
+	std::cout << "    - Found shells can be used to reset the water level\n";
+	std::cout << "    - Submit when you think you've flagged all the jellies!\n";
+
+	std::cout << "\n  Debug messages are printed here:\n";
 
 	// Initial state
 	changeState(new PlayState());

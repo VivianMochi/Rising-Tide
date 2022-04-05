@@ -13,7 +13,7 @@ void PlayState::init() {
 	std::ifstream saveFile("Save.txt");
 	if (saveFile.is_open()) {
 		saveFile >> best;
-		std::cout << "  Loaded high score: " << best << "\n";
+		std::cout << "    Loaded high score: " << best << "\n";
 	}
 	saveFile.close();
 
