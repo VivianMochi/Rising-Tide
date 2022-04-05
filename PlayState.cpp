@@ -191,7 +191,15 @@ void PlayState::gotEvent(sf::Event event) {
 		bool debugEnabled = false;
 		if (debugEnabled) {
 			if (event.key.code == sf::Keyboard::Num1) {
+				int oldPalette = cm::getCurrentPalette();
 				cm::init();
+				cm::selectPalette(oldPalette, true);
+			}
+			else if (event.key.code == sf::Keyboard::Num2) {
+				cm::selectPalette(cm::getCurrentPalette() - 1);
+			}
+			else if (event.key.code == sf::Keyboard::Num3) {
+				cm::selectPalette(cm::getCurrentPalette() + 1);
 			}
 			else if (event.key.code == sf::Keyboard::Right) {
 				loadLevel(level + 1);
