@@ -5,9 +5,7 @@
 #include "ColorManager.h"
 
 void WaterBar::init() {
-	rm::loadTexture("Resource/Image/Water.png").setRepeated(true);
-	tankWater.setTexture(rm::loadTexture("Resource/Image/Water.png"));
-	tankWater.setTextureRect(sf::IntRect(0, 0, 6, 110));
+	tankWater.setTexture(rm::loadTexture("Resource/Image/WaterTank.png"));
 	tankWater.setPosition(3, 135);
 
 	verticalBarSprite.setTexture(rm::loadTexture("Resource/Image/WaterBar.png"));
