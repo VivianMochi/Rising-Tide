@@ -69,6 +69,8 @@ void BitmapText::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 }
 
 int BitmapText::getGlyphWidth(char character) const {
+	character = std::toupper(character);
+
 	if (character == '\n') {
 		return 0;
 	}

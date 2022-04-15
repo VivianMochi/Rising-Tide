@@ -7,11 +7,19 @@
 
 Button::Button(std::string text) {
 	this->text = text;
+	buttonSprite.setTexture(rm::loadTexture("Resource/Image/Button.png"));
+	baseRect = sf::IntRect(0, 0, 55, 14);
+}
+
+Button::Button(std::string text, sf::Texture &texture, sf::IntRect textureRect) {
+	this->text = text;
+	buttonSprite.setTexture(texture);
+	baseRect = textureRect;
+	showText = false;
 }
 
 void Button::init() {
-	buttonSprite.setTexture(rm::loadTexture("Resource/Image/Button.png"));
-	buttonSprite.setTextureRect(sf::IntRect(0, 0, 55, 14));
+
 }
 
 void Button::update(sf::Time elapsed) {
@@ -20,27 +28,26 @@ void Button::update(sf::Time elapsed) {
 	if (pressTime < 0) {
 		pressTime = 0;
 	}
+	sf::IntRect textureRect = baseRect;
 	if (!enabled) {
-		buttonSprite.setTextureRect(sf::IntRect(0, 28, 55, 14));
+		textureRect.top = 2 * textureRect.height;
 	}
 	else if (pressTime > 0) {
-		buttonSprite.setTextureRect(sf::IntRect(0, 14, 55, 14));
+		textureRect.top = textureRect.height;
 	}
-	else {
-		buttonSprite.setTextureRect(sf::IntRect(0, 0, 55, 14));
-	}
+	buttonSprite.setTextureRect(textureRect);
 	buttonSprite.setColor(cm::getUIColor());
 }
 
-bool Button::clickPosition(sf::Vector2f position) {
+std::string Button::clickPosition(sf::Vector2f position) {
 	if (enabled) {
-		sf::FloatRect hitBox(getPosition(), sf::Vector2f(55, 14));
+		sf::FloatRect hitBox(getPosition(), sf::Vector2f(baseRect.width, baseRect.height));
 		if (hitBox.contains(position)) {
 			pressTime = 0.1;
-			return true;
+			return text;
 		}
 	}
-	return false;
+	return "";
 }
 
 void Button::draw(sf::RenderTarget &target, sf::RenderStates states) const {
@@ -48,15 +55,17 @@ void Button::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 
 	target.draw(buttonSprite, states);
 
-	BitmapText textSprite;
-	textSprite.setTexture(rm::loadTexture("Resource/Image/Font.png"));
-	if (!enabled) {
-		textSprite.setColor(cm::getDisabledTextColor());
+	if (showText) {
+		BitmapText textSprite;
+		textSprite.setTexture(rm::loadTexture("Resource/Image/Font.png"));
+		if (!enabled) {
+			textSprite.setColor(cm::getDisabledTextColor());
+		}
+		else {
+			textSprite.setColor(cm::getTextColor());
+		}
+		textSprite.setText(text);
+		textSprite.setPosition(baseRect.width / 2 - textSprite.getWidth() / 2, (pressTime > 0 || !enabled ? 4 : 2));
+		target.draw(textSprite, states);
 	}
-	else {
-		textSprite.setColor(cm::getTextColor());
-	}
-	textSprite.setText(text);
-	textSprite.setPosition(55 / 2 - textSprite.getWidth() / 2, (pressTime > 0 || !enabled ? 4 : 2));
-	target.draw(textSprite, states);
 }

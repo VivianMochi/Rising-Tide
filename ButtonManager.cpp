@@ -18,8 +18,9 @@ void ButtonManager::addButton(std::shared_ptr<Button> button) {
 
 std::string ButtonManager::clickPosition(sf::Vector2f position) {
 	for (std::shared_ptr<Button> &button : buttons) {
-		if (button->clickPosition(position)) {
-			return button->text;
+		std::string result = button->clickPosition(position);
+		if (result != "") {
+			return result;
 		}
 	}
 	return "";

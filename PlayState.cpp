@@ -36,6 +36,17 @@ void PlayState::init() {
 	buttonMenu = std::make_shared<Button>("Menu");
 	initEntity(*buttonMenu);
 	buttons.addButton(buttonMenu);
+	if (PALETTE_SELECT_ENABLED) {
+		buttonPaletteLeft = std::make_shared<Button>("PaletteLeft", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(0, 0, 19, 10));
+		initEntity(*buttonPaletteLeft);
+		buttons.addButton(buttonPaletteLeft);
+		buttonPaletteLink = std::make_shared<Button>("PaletteLink", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(18, 0, 19, 10));
+		initEntity(*buttonPaletteLink);
+		buttons.addButton(buttonPaletteLink);
+		buttonPaletteRight = std::make_shared<Button>("PaletteRight", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(36, 0, 19, 10));
+		initEntity(*buttonPaletteRight);
+		buttons.addButton(buttonPaletteRight);
+	}
 
 	initEntity(grid);
 	grid.setPosition(GRID_LEFT, getGame()->gameSize.y + 4);
@@ -49,6 +60,8 @@ void PlayState::init() {
 	leftPane.setPosition(-71, 0);
 	rightPane.setTexture(rm::loadTexture("Resource/Image/RightPane.png"));
 	rightPane.setPosition(getGame()->gameSize.x, 0);
+	paletteSelect.setTexture(rm::loadTexture("Resource/Image/PalettePane.png"));
+	paletteSelect.setPosition(leftPane.getPosition() + sf::Vector2f(2, PALETTE_SELECT_TOP));
 
 	title.setTexture(rm::loadTexture("Resource/Image/Title.png"));
 	sun.setTexture(rm::loadTexture("Resource/Image/Sun.png"));
@@ -131,6 +144,24 @@ void PlayState::gotEvent(sf::Event event) {
 					phase = menu;
 					soundSelect.play();
 				}
+				else if (clickedButton == "PaletteLeft") {
+					selectedPalette = cm::getCurrentPalette() - 1;
+					if (selectedPalette < 0) {
+						selectedPalette = 0;
+					}
+					cm::selectPalette(selectedPalette);
+					soundSelect.play();
+				}
+				else if (clickedButton == "PaletteLink") {
+					selectedPalette = -1;
+					cm::selectPalette(level);
+					soundSelect.play();
+				}
+				else if (clickedButton == "PaletteRight") {
+					selectedPalette = cm::getCurrentPalette() + 1;
+					cm::selectPalette(selectedPalette);
+					soundSelect.play();
+				}
 				else {
 					// Left click on board
 					std::string found = grid.digPosition(getGame()->getCursorPosition() - grid.getPosition());
@@ -188,18 +219,11 @@ void PlayState::gotEvent(sf::Event event) {
 			}
 		}
 
-		bool debugEnabled = false;
-		if (debugEnabled) {
+		if (DEBUG_ENABLED) {
 			if (event.key.code == sf::Keyboard::Num1) {
 				int oldPalette = cm::getCurrentPalette();
 				cm::init();
 				cm::selectPalette(oldPalette, true);
-			}
-			else if (event.key.code == sf::Keyboard::Num2) {
-				cm::selectPalette(cm::getCurrentPalette() - 1);
-			}
-			else if (event.key.code == sf::Keyboard::Num3) {
-				cm::selectPalette(cm::getCurrentPalette() + 1);
 			}
 			else if (event.key.code == sf::Keyboard::Right) {
 				loadLevel(level + 1);
@@ -302,6 +326,9 @@ void PlayState::update(sf::Time elapsed) {
 	leftPane.move((sf::Vector2f(desiredX, 0) - leftPane.getPosition()) * elapsed.asSeconds() * 5.0f);
 	leftPane.setColor(cm::getUIColor());
 
+	paletteSelect.setPosition(leftPane.getPosition() + sf::Vector2f(2, PALETTE_SELECT_TOP));
+	paletteSelect.setColor(cm::getUIColor());
+
 	desiredX = getGame()->gameSize.x - 71;
 	if (phase == menu) {
 		desiredX = getGame()->gameSize.x;
@@ -329,6 +356,16 @@ void PlayState::update(sf::Time elapsed) {
 	buttonMenu->enabled = phase != submitting && phase != results && phase != loss;
 	buttonShell->setPosition(rightPane.getPosition() + sf::Vector2f(14, 44));
 	buttonShell->enabled = shells > 0 && phase != submitting && phase != results && phase != loss;
+	if (PALETTE_SELECT_ENABLED) {
+		bool atLeftEnd = cm::getCurrentPalette() == 0;
+		bool atRightEnd = cm::getCurrentPalette() >= cm::getTotalPalettes() - 1 || (!PALETTE_SELECT_DEBUG_ENABLED && cm::getCurrentPalette() >= unlockedPalettes - 1);
+		buttonPaletteLeft->setPosition(leftPane.getPosition() + sf::Vector2f(2, PALETTE_BUTTONS_TOP));
+		buttonPaletteLeft->enabled = !atLeftEnd && phase != submitting && phase != results && phase != loss;
+		buttonPaletteLink->setPosition(leftPane.getPosition() + sf::Vector2f(20, PALETTE_BUTTONS_TOP));
+		buttonPaletteLink->enabled = phase != submitting && phase != results && phase != loss && selectedPalette != -1;
+		buttonPaletteRight->setPosition(leftPane.getPosition() + sf::Vector2f(38, PALETTE_BUTTONS_TOP));
+		buttonPaletteRight->enabled = !atRightEnd && phase != submitting && phase != results && phase != loss;
+	}
 	buttons.update(elapsed);
 
 	// Update water
@@ -402,6 +439,9 @@ void PlayState::render(sf::RenderWindow &window) {
 
 	// Render panes
 	window.draw(leftPane);
+	if (PALETTE_SELECT_ENABLED) {
+		window.draw(paletteSelect);
+	}
 	ra::renderJelly(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(3, 17));
 	ra::renderFlag(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(3, 31));
 	window.draw(rightPane);
@@ -410,7 +450,7 @@ void PlayState::render(sf::RenderWindow &window) {
 
 	// Render section title
 	text.setText(levelName);
-	text.setPosition(leftPane.getPosition() + sf::Vector2f(36 - text.getWidth() / 2, 4));
+	text.setPosition(leftPane.getPosition() + sf::Vector2f(35 - text.getWidth() / 2, 4));
 	window.draw(text);
 
 	// Jelly and flag counts
@@ -458,6 +498,14 @@ void PlayState::render(sf::RenderWindow &window) {
 	}
 	window.draw(text);
 
+	// Palette name
+	if (PALETTE_SELECT_ENABLED) {
+		text.setText(cm::getPaletteName(cm::getCurrentPalette()));
+		text.setPosition(paletteSelect.getPosition() + sf::Vector2f(27 - text.getWidth() / 2, 16));
+		text.setColor(cm::getTextColor());
+		window.draw(text);
+	}
+
 	window.draw(waterBar);
 	window.draw(buttons);
 
@@ -485,7 +533,16 @@ void PlayState::playDigSound() {
 void PlayState::loadLevel(int level) {
 	this->level = level;
 
-	cm::selectPalette(level);
+	// Unlock and change the palette
+	if (level + 1 > unlockedPalettes) {
+		unlockedPalettes = level + 1;
+		if (unlockedPalettes > cm::getTotalPalettes()) {
+			unlockedPalettes = cm::getTotalPalettes();
+		}
+	}
+	if (selectedPalette == -1) {
+		cm::selectPalette(level);
+	}
 
 	if (level >= 26) {
 		levelName = std::string("Section ?");

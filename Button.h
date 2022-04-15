@@ -6,13 +6,16 @@
 class Button : public Entity {
 public:
 	Button(std::string text = "");
+	Button(std::string text, sf::Texture &texture, sf::IntRect textureRect);
 
 	virtual void init() override;
 	virtual void update(sf::Time elapsed) override;
 
-	bool clickPosition(sf::Vector2f position);
+	std::string clickPosition(sf::Vector2f position);
 
 	std::string text = "";
+	sf::IntRect baseRect;
+	bool showText = true;
 	bool enabled = true;
 
 private:

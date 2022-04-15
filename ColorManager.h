@@ -2,13 +2,28 @@
 
 #include <SFML/Graphics.hpp>
 
+const std::vector<std::string> PALETTE_NAMES = {
+	"Beach",
+	"Wood",
+	"Sunset",
+	"Night",
+	"Pastel",
+	"Hills",
+	"Magma",
+	"Virtual",
+	"Soda",
+	"Retro",
+};
+
 namespace cm {
 	void init();
 	void selectPalette(int index, bool instant = false);
 	int getCurrentPalette();
 	void updatePalette(sf::Time elapsed);
+	int getTotalPalettes();
 
 	sf::Color getPaletteColor(int index);
+	std::string getPaletteName(int index);
 
 	sf::Color getSkyColor();
 	sf::Color getWaterColor();

@@ -21,8 +21,8 @@ void cm::selectPalette(int index, bool instant) {
 	if (index < 0) {
 		index = 0;
 	}
-	while (index >= paletteSheet.getSize().y) {
-		index -= paletteSheet.getSize().y;
+	while (index >= getTotalPalettes()) {
+		index -= getTotalPalettes();
 	}
 	currentPalette = index;
 
@@ -45,6 +45,10 @@ void cm::updatePalette(sf::Time elapsed) {
 	}
 }
 
+int cm::getTotalPalettes() {
+	return paletteSheet.getSize().y;
+}
+
 sf::Color cm::getPaletteColor(int index) {
 	if (index >= 0 && index < palette.size()) {
 		return palette[index];
@@ -53,6 +57,13 @@ sf::Color cm::getPaletteColor(int index) {
 		return palette[0];
 	}
 	return sf::Color();
+}
+
+std::string cm::getPaletteName(int index) {
+	if (index >= 0 && index < getTotalPalettes() && index < PALETTE_NAMES.size()) {
+		return PALETTE_NAMES[index];
+	}
+	return "ERROR";
 }
 
 sf::Color cm::getSkyColor() {

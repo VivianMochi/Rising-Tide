@@ -13,6 +13,13 @@ const int GRID_LEFT = 70;
 const float SUBMIT_INTERVAL = 0.1;
 const float SUBMIT_INTERVAL_ITEM = 0.3;
 const float SUBMIT_INTERVAL_BREAK = 1;
+const float PALETTE_SELECT_TOP = 82;
+const float PALETTE_BUTTONS_TOP = PALETTE_SELECT_TOP + 25;
+
+const bool PALETTE_SELECT_ENABLED = true;
+
+const bool DEBUG_ENABLED = false;
+const bool PALETTE_SELECT_DEBUG_ENABLED = false;
 
 class PlayState : public State {
 public:
@@ -63,6 +70,12 @@ private:
 	int score = 0;
 	int shells = 0;
 
+	// Palette control
+	// -1 is the code to link the palette to the current level
+	int selectedPalette = -1;
+	// The number of palettes that have been unlocked
+	int unlockedPalettes = 1;
+
 	ButtonManager buttons;
 
 	std::shared_ptr<Button> buttonStart;
@@ -70,12 +83,16 @@ private:
 	std::shared_ptr<Button> buttonSubmit;
 	std::shared_ptr<Button> buttonShell;
 	std::shared_ptr<Button> buttonMenu;
+	std::shared_ptr<Button> buttonPaletteLeft;
+	std::shared_ptr<Button> buttonPaletteLink;
+	std::shared_ptr<Button> buttonPaletteRight;
 
 	Grid grid;
 	Water water;
 
 	sf::Sprite leftPane;
 	sf::Sprite rightPane;
+	sf::Sprite paletteSelect;
 	WaterBar waterBar;
 	
 	sf::Sprite title;
