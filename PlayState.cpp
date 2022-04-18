@@ -10,12 +10,15 @@
 
 void PlayState::init() {
 	// Try to load save
-	std::ifstream saveFile("Save.txt");
-	if (saveFile.is_open()) {
-		saveFile >> best;
-		std::cout << "    Loaded high score: " << best << "\n";
+	load();
+
+	// Load the saved palette, or select a random unlocked palette
+	if (saveData[selectedPalette] == -1) {
+		cm::selectPalette(std::rand() % saveData[unlockedPalettes], true);
 	}
-	saveFile.close();
+	else {
+		cm::selectPalette(saveData[selectedPalette], true);
+	}
 
 	initEntity(buttons);
 
@@ -96,10 +99,12 @@ void PlayState::init() {
 	musicWarning.setVolume(0);
 	musicWarning.setLoop(true);
 
-	musicBase.play();
-	musicActive.play();
-	musicBeat.play();
-	musicWarning.play();
+	if (!DEBUG_MUSIC_DISABLED) {
+		musicBase.play();
+		musicActive.play();
+		musicBeat.play();
+		musicWarning.play();
+	}
 }
 
 void PlayState::gotEvent(sf::Event event) {
@@ -145,22 +150,25 @@ void PlayState::gotEvent(sf::Event event) {
 					soundSelect.play();
 				}
 				else if (clickedButton == "PaletteLeft") {
-					selectedPalette = cm::getCurrentPalette() - 1;
-					if (selectedPalette < 0) {
-						selectedPalette = 0;
+					saveData[selectedPalette] = cm::getCurrentPalette() - 1;
+					if (saveData[selectedPalette] < 0) {
+						saveData[selectedPalette] = 0;
 					}
-					cm::selectPalette(selectedPalette);
+					cm::selectPalette(saveData[selectedPalette]);
 					soundSelect.play();
+					save();
 				}
 				else if (clickedButton == "PaletteLink") {
-					selectedPalette = -1;
+					saveData[selectedPalette] = -1;
 					cm::selectPalette(level);
 					soundSelect.play();
+					save();
 				}
 				else if (clickedButton == "PaletteRight") {
-					selectedPalette = cm::getCurrentPalette() + 1;
-					cm::selectPalette(selectedPalette);
+					saveData[selectedPalette] = cm::getCurrentPalette() + 1;
+					cm::selectPalette(saveData[selectedPalette]);
 					soundSelect.play();
+					save();
 				}
 				else {
 					// Left click on board
@@ -358,11 +366,11 @@ void PlayState::update(sf::Time elapsed) {
 	buttonShell->enabled = shells > 0 && phase != submitting && phase != results && phase != loss;
 	if (PALETTE_SELECT_ENABLED) {
 		bool atLeftEnd = cm::getCurrentPalette() == 0;
-		bool atRightEnd = cm::getCurrentPalette() >= cm::getTotalPalettes() - 1 || (!PALETTE_SELECT_DEBUG_ENABLED && cm::getCurrentPalette() >= unlockedPalettes - 1);
+		bool atRightEnd = cm::getCurrentPalette() >= cm::getTotalPalettes() - 1 || (!PALETTE_SELECT_DEBUG_ENABLED && cm::getCurrentPalette() >= saveData[unlockedPalettes] - 1);
 		buttonPaletteLeft->setPosition(leftPane.getPosition() + sf::Vector2f(2, PALETTE_BUTTONS_TOP));
 		buttonPaletteLeft->enabled = !atLeftEnd && phase != submitting && phase != results && phase != loss;
 		buttonPaletteLink->setPosition(leftPane.getPosition() + sf::Vector2f(20, PALETTE_BUTTONS_TOP));
-		buttonPaletteLink->enabled = phase != submitting && phase != results && phase != loss && selectedPalette != -1;
+		buttonPaletteLink->enabled = phase != submitting && phase != results && phase != loss && saveData[selectedPalette] != -1;
 		buttonPaletteRight->setPosition(leftPane.getPosition() + sf::Vector2f(38, PALETTE_BUTTONS_TOP));
 		buttonPaletteRight->enabled = !atRightEnd && phase != submitting && phase != results && phase != loss;
 	}
@@ -468,7 +476,7 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(text);
 
 	// Score counts
-	text.setText(std::to_string(best));
+	text.setText(std::to_string(saveData[best]));
 	text.setPosition(rightPane.getPosition() + sf::Vector2f(40, 4));
 	if (bestFlashTime > 0 && flashTime < 0.1) {
 		text.setColor(cm::getFlashColor());
@@ -519,6 +527,57 @@ void PlayState::initEntity(Entity &entity) {
 	entity.init();
 }
 
+void PlayState::save() {
+	std::ofstream saveFile("Save.txt");
+	saveFile << "version " << VERSION << "\n";
+	for (auto entry : saveData) {
+		saveFile << entry.first << " " << entry.second << "\n";
+	}
+	saveFile << "end";
+	saveFile.close();
+}
+
+void PlayState::load() {
+	// Clear any old save data and initialize default values
+	saveData.clear();
+	saveData[best] = 0;
+	saveData[selectedPalette] = -1;
+	saveData[unlockedPalettes] = 1;
+
+	std::ifstream saveFile("Save.txt");
+	if (saveFile.is_open()) {
+		std::cout << "    Save data found:\n";
+		std::string token;
+		saveFile >> token;
+
+		int version = 0;
+		if (token == "version") {
+			saveFile >> version;
+			saveFile >> token;
+		}
+		std::cout << "      Save version is 1." << version << ((version < VERSION) ? " (older)\n" : "\n");
+
+		if (version == 0) {
+			saveData[best] = std::stoi(token);
+			std::cout << "      Loaded high score: " << saveData[best] << "\n";
+		}
+		else if (version == 1) {
+			while (token != "end") {
+				saveFile >> saveData[token];
+				std::cout << "      Loaded stat " << token << ": " << saveData[token] << "\n";
+				saveFile >> token;
+			}
+		}
+		else {
+			std::cout << "      Save version not recognized! (Currently running version 1." << VERSION << ")\n";
+		}
+	}
+	else {
+		std::cout << "    No save data found";
+	}
+	saveFile.close();
+}
+
 void PlayState::adjustMusicVolume(sf::Music &music, float desiredVolume, float factor) {
 	float volume = music.getVolume();
 	volume += (desiredVolume - volume) * factor;
@@ -534,13 +593,16 @@ void PlayState::loadLevel(int level) {
 	this->level = level;
 
 	// Unlock and change the palette
-	if (level + 1 > unlockedPalettes) {
-		unlockedPalettes = level + 1;
-		if (unlockedPalettes > cm::getTotalPalettes()) {
-			unlockedPalettes = cm::getTotalPalettes();
+	if (level + 1 > saveData[unlockedPalettes]) {
+		saveData[unlockedPalettes] = level + 1;
+		if (saveData[unlockedPalettes] > cm::getTotalPalettes()) {
+			saveData[unlockedPalettes] = cm::getTotalPalettes();
 		}
+
+		// Save unlocked palettes
+		save();
 	}
-	if (selectedPalette == -1) {
+	if (saveData[selectedPalette] == -1) {
 		cm::selectPalette(level);
 	}
 
@@ -574,14 +636,12 @@ void PlayState::findItem(std::string item, bool flagged) {
 	if (item == "jelly") {
 		if (flagged) {
 			score += 1;
-			if (score > best) {
-				best = score;
+			if (score > saveData[best]) {
+				saveData[best] = score;
 				bestFlashTime = 1;
 
-				// Save best to file
-				std::ofstream saveFile("Save.txt");
-				saveFile << best;
-				saveFile.close();
+				// Save best score
+				save();
 			}
 			flashTime = 0;
 			scoreFlashTime = 1;

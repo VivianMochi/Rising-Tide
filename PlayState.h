@@ -8,6 +8,10 @@
 #include "WaterBar.h"
 #include "ButtonManager.h"
 #include <SFML/Audio.hpp>
+#include <map>
+
+// The minor version of the game
+const int VERSION = 1;
 
 const int GRID_LEFT = 70;
 const float SUBMIT_INTERVAL = 0.1;
@@ -20,6 +24,7 @@ const bool PALETTE_SELECT_ENABLED = true;
 
 const bool DEBUG_ENABLED = false;
 const bool PALETTE_SELECT_DEBUG_ENABLED = false;
+const bool DEBUG_MUSIC_DISABLED = false;
 
 class PlayState : public State {
 public:
@@ -29,6 +34,9 @@ public:
 	virtual void render(sf::RenderWindow &window) override;
 
 	void initEntity(Entity &entity);
+
+	void save();
+	void load();
 
 	enum {
 		menu,
@@ -66,15 +74,17 @@ private:
 	std::string levelName = "";
 
 	// Player stats
-	int best = 0;
 	int score = 0;
 	int shells = 0;
 
-	// Palette control
-	// -1 is the code to link the palette to the current level
-	int selectedPalette = -1;
+	// Saved data
+	std::map<std::string, int> saveData;
+	// The high score
+	const std::string best = "best";
+	// The selected palette (-1 is the code to link the palette to the current level)
+	const std::string selectedPalette = "palette";
 	// The number of palettes that have been unlocked
-	int unlockedPalettes = 1;
+	const std::string unlockedPalettes = "unlocked";
 
 	ButtonManager buttons;
 
