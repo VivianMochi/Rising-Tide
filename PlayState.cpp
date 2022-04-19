@@ -253,6 +253,9 @@ void PlayState::gotEvent(sf::Event event) {
 					loadLevel(level - 1);
 				}
 			}
+			else if (event.key.code == sf::Keyboard::Up) {
+				findItem("shell");
+			}
 		}
 	}
 }
@@ -336,6 +339,7 @@ void PlayState::update(sf::Time elapsed) {
 		desiredY = getGame()->gameSize.y + 4;
 	}
 	grid.move((sf::Vector2f(GRID_LEFT, desiredY) - grid.getPosition()) * elapsed.asSeconds() * 5.0f);
+	grid.xray = DEBUG_ENABLED && sf::Keyboard::isKeyPressed(sf::Keyboard::Down);
 	grid.update(elapsed);
 
 	// Update panes
@@ -644,11 +648,23 @@ void PlayState::loadLevel(int level) {
 	}
 
 	jellies = 10 + level;
+	if (NEW_MODE && jellies > 20) {
+		jellies = 20;
+	}
 	flags = jellies + extraFlags;
 
-	int waterBlocks = 10 - level / 2;
-	if (waterBlocks < 2) {
-		waterBlocks = 2;
+	int waterBlocks = 10;
+	if (NEW_MODE) {
+		waterBlocks = 10 - level / 3;
+		if (waterBlocks < 5) {
+			waterBlocks = 5;
+		}
+	}
+	else {
+		waterBlocks = 10 - level / 2;
+		if (waterBlocks < 2) {
+			waterBlocks = 2;
+		}
 	}
 	waterBar.setMaxBlocks(waterBlocks);
 	waterBar.resetSystem();

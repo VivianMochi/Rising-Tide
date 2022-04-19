@@ -4,6 +4,7 @@
 #include "ResourceManager.h"
 #include "ColorManager.h"
 #include "RenderAssist.h"
+#include "PlayState.h"
 
 void Grid::init() {
 	gridSprite.setTexture(rm::loadTexture("Resource/Image/Grid.png"));
@@ -52,9 +53,27 @@ void Grid::generateGrid(int jellyfish, int shells) {
 	}
 
 	// Place all shells
-	for (int s = 0; s < shells; s++) {
-		sf::Vector2i position = getEmptySquare();
-		squares[position.x][position.y]->inside = "shell";
+	if (!NEW_MODE) {
+		// Option A: Place shells randomly
+		for (int s = 0; s < shells; s++) {
+			sf::Vector2i position = getEmptySquare();
+			squares[position.x][position.y]->inside = "shell";
+		}
+	}
+	else {
+		// Option B: Shells indicate that 3 or more jellies are nearby
+		for (int x = 0; x < GRID_WIDTH; x++) {
+			for (int y = 0; y < GRID_HEIGHT; y++) {
+				if (squares[x][y]) {
+					if (squares[x][y]->inside == "") {
+						int jellies = getSurroundingJellies(sf::Vector2i(x, y));
+						if (jellies >= 3) {
+							squares[x][y]->inside = "shell";
+						}
+					}
+				}
+			}
+		}
 	}
 
 	// Place seaweed
@@ -194,7 +213,7 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 			if (squares[x][y]) {
 				// Draw sand square
 				squareSprite.setPosition(squares[x][y]->position);
-				if (!squares[x][y]->dug) {
+				if (!squares[x][y]->dug && !xray) {
 					squareSprite.setTextureRect(sf::IntRect(squares[x][y]->spriteIndex * 10, 0, 10, 10));
 					target.draw(squareSprite, states);
 				}
@@ -284,4 +303,22 @@ bool Grid::isOnGrid(int x, int y) {
 		}
 	}
 	return false;
+}
+
+int Grid::getSurroundingJellies(sf::Vector2i position, bool includeDiagonals) {
+	int jellies = 0;
+	for (int dx = -1; dx <= 1; dx++) {
+		for (int dy = -1; dy <= 1; dy++) {
+			if (!(dx == 0 && dy == 0)) {
+				if (includeDiagonals || (dx == 0 || dy == 0)) {
+					int jx = position.x + dx;
+					int jy = position.y + dy;
+					if (isOnGrid(jx, jy) && squares[jx][jy] && squares[jx][jy]->inside == "jelly") {
+						jellies += 1;
+					}
+				}
+			}
+		}
+	}
+	return jellies;
 }

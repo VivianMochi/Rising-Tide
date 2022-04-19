@@ -61,6 +61,10 @@ public:
 	// Will return "none" if there are no applicable grid squares left
 	std::string popSquare(bool flagged = false);
 
+	// This will reveal the contents of all tiles when true
+	// Used for debugging
+	bool xray = false;
+
 private:
 	virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 
@@ -76,6 +80,9 @@ private:
 	sf::Vector2i getEmptySquare(bool preferBottom = false);
 	sf::Vector2f getPositionForSquare(int x, int y);
 	bool isOnGrid(int x, int y);
+	// Returns the number of jellyfish around the given position
+	// Ignores the given position
+	int getSurroundingJellies(sf::Vector2i position, bool includeDiagonals = true);
 
 	std::vector<std::vector<std::shared_ptr<Square>>> squares;
 	std::vector<Tab> tabs;
