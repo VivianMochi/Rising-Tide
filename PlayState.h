@@ -85,6 +85,7 @@ private:
 	const std::string selectedPalette = "palette";
 	// The number of palettes that have been unlocked
 	const std::string unlockedPalettes = "unlocked";
+	const std::string muted = "muted";
 
 	ButtonManager buttons;
 
@@ -96,6 +97,7 @@ private:
 	std::shared_ptr<Button> buttonPaletteLeft;
 	std::shared_ptr<Button> buttonPaletteLink;
 	std::shared_ptr<Button> buttonPaletteRight;
+	std::shared_ptr<Button> buttonMute;
 
 	Grid grid;
 	Water water;

@@ -50,6 +50,9 @@ void PlayState::init() {
 		initEntity(*buttonPaletteRight);
 		buttons.addButton(buttonPaletteRight);
 	}
+	buttonMute = std::make_shared<Button>("Mute", rm::loadTexture("Resource/Image/MuteButton.png"), sf::IntRect(saveData[muted] ? 11 : 0, 0, 12, 14));
+	initEntity(*buttonMute);
+	buttons.addButton(buttonMute);
 
 	initEntity(grid);
 	grid.setPosition(GRID_LEFT, getGame()->gameSize.y + 4);
@@ -85,6 +88,9 @@ void PlayState::init() {
 
 	// Load music
 	musicBase.openFromFile("Resource/Music/MusicBase.ogg");
+	if (saveData[muted] == 1) {
+		musicBase.setVolume(0);
+	}
 	musicBase.setLoop(true);
 
 	musicActive.openFromFile("Resource/Music/MusicActive.ogg");
@@ -167,6 +173,12 @@ void PlayState::gotEvent(sf::Event event) {
 				else if (clickedButton == "PaletteRight") {
 					saveData[selectedPalette] = cm::getCurrentPalette() + 1;
 					cm::selectPalette(saveData[selectedPalette]);
+					soundSelect.play();
+					save();
+				}
+				else if (clickedButton == "Mute") {
+					saveData[muted] = !saveData[muted];
+					buttonMute->baseRect = sf::IntRect(saveData[muted] ? 11 : 0, 0, 12, 14);
 					soundSelect.play();
 					save();
 				}
@@ -356,24 +368,27 @@ void PlayState::update(sf::Time elapsed) {
 	}
 
 	// Update buttons
+	bool buttonsActive = phase != submitting && phase != results && phase != loss;
 	buttonStart->setPosition(getGame()->gameSize.x / 2 - 55 / 2, menuPaneY + 87);
 	buttonExit->setPosition(getGame()->gameSize.x / 2 - 55 / 2, menuPaneY + 105);
 	buttonSubmit->setPosition(leftPane.getPosition() + sf::Vector2f(2, 44));
 	buttonSubmit->enabled = phase != submitting;
 	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 119));
-	buttonMenu->enabled = phase != submitting && phase != results && phase != loss;
+	buttonMenu->enabled = buttonsActive;
 	buttonShell->setPosition(rightPane.getPosition() + sf::Vector2f(14, 44));
-	buttonShell->enabled = shells > 0 && phase != submitting && phase != results && phase != loss;
+	buttonShell->enabled = shells > 0 && buttonsActive;
 	if (PALETTE_SELECT_ENABLED) {
 		bool atLeftEnd = cm::getCurrentPalette() == 0;
 		bool atRightEnd = cm::getCurrentPalette() >= cm::getTotalPalettes() - 1 || (!PALETTE_SELECT_DEBUG_ENABLED && cm::getCurrentPalette() >= saveData[unlockedPalettes] - 1);
 		buttonPaletteLeft->setPosition(leftPane.getPosition() + sf::Vector2f(2, PALETTE_BUTTONS_TOP));
-		buttonPaletteLeft->enabled = !atLeftEnd && phase != submitting && phase != results && phase != loss;
+		buttonPaletteLeft->enabled = !atLeftEnd && buttonsActive;
 		buttonPaletteLink->setPosition(leftPane.getPosition() + sf::Vector2f(20, PALETTE_BUTTONS_TOP));
-		buttonPaletteLink->enabled = phase != submitting && phase != results && phase != loss && saveData[selectedPalette] != -1;
+		buttonPaletteLink->enabled = buttonsActive && saveData[selectedPalette] != -1;
 		buttonPaletteRight->setPosition(leftPane.getPosition() + sf::Vector2f(38, PALETTE_BUTTONS_TOP));
-		buttonPaletteRight->enabled = !atRightEnd && phase != submitting && phase != results && phase != loss;
+		buttonPaletteRight->enabled = !atRightEnd && buttonsActive;
 	}
+	buttonMute->setPosition(rightPane.getPosition() + sf::Vector2f(57, 105));
+	buttonMute->enabled = buttonsActive;
 	buttons.update(elapsed);
 
 	// Update water
@@ -382,10 +397,17 @@ void PlayState::update(sf::Time elapsed) {
 	water.setPosition(grid.getPosition() + sf::Vector2f(0, 100));
 
 	// Update music
+	float volumeBase = 100;
 	float volumeActive = 0;
 	float volumeBeat = 0;
 	float volumeWarning = 0;
-	if (phase == playing) {
+	if (saveData[muted] == 1) {
+		volumeBase = 0;
+		volumeActive = 0;
+		volumeBeat = 0;
+		volumeWarning = 0;
+	}
+	else if (phase == playing) {
 		if (waterBar.waterLevel >= 3) {
 			volumeActive = 100;
 		}
@@ -416,6 +438,7 @@ void PlayState::update(sf::Time elapsed) {
 			volumeWarning = 25;
 		}
 	}
+	adjustMusicVolume(musicBase, volumeBase, elapsed.asSeconds() * 3);
 	adjustMusicVolume(musicActive, volumeActive, elapsed.asSeconds() * 3);
 	adjustMusicVolume(musicBeat, volumeBeat, elapsed.asSeconds() * 3);
 	adjustMusicVolume(musicWarning, volumeWarning, elapsed.asSeconds() * 3);
@@ -543,6 +566,7 @@ void PlayState::load() {
 	saveData[best] = 0;
 	saveData[selectedPalette] = -1;
 	saveData[unlockedPalettes] = 1;
+	saveData[muted] = 0;
 
 	std::ifstream saveFile("Save.txt");
 	if (saveFile.is_open()) {
