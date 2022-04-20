@@ -10,7 +10,7 @@ const int GRID_HEIGHT = 10;
 
 struct Square {
 	// What this block contains
-	// Can be "", "shell", "weed", or "jelly"
+	// Can be "", "shell", "weed", "star", or "jelly"
 	std::string inside = "";
 	// If this square has been dug out
 	bool dug = false;
@@ -78,6 +78,8 @@ private:
 	// Returns a random square with nothing inside it
 	// If preferBottom is chosen, there is a ~50% chance it will be on the bottom half of the grid
 	sf::Vector2i getEmptySquare(bool preferBottom = false);
+	// Returns a random square matching the specified type
+	sf::Vector2i getRandomSquare(std::string type = "");
 	sf::Vector2f getPositionForSquare(int x, int y);
 	bool isOnGrid(int x, int y);
 	// Returns the number of jellyfish around the given position

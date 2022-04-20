@@ -52,27 +52,27 @@ void Grid::generateGrid(int jellyfish, int shells) {
 		squares[position.x][position.y]->inside = "jelly";
 	}
 
-	// Place all shells
-	if (!NEW_MODE) {
-		// Option A: Place shells randomly
-		for (int s = 0; s < shells; s++) {
-			sf::Vector2i position = getEmptySquare();
-			squares[position.x][position.y]->inside = "shell";
-		}
-	}
-	else {
-		// Option B: Shells indicate that 3 or more jellies are nearby
+	// Place starfish
+	if (NEW_MODE) {
 		for (int x = 0; x < GRID_WIDTH; x++) {
 			for (int y = 0; y < GRID_HEIGHT; y++) {
 				if (squares[x][y]) {
 					if (squares[x][y]->inside == "") {
 						int jellies = getSurroundingJellies(sf::Vector2i(x, y));
 						if (jellies >= 3) {
-							squares[x][y]->inside = "shell";
+							squares[x][y]->inside = "star";
 						}
 					}
 				}
 			}
+		}
+	}
+
+	// Shell option A: Place shells randomly
+	if (!NEW_MODE) {
+		for (int s = 0; s < shells; s++) {
+			sf::Vector2i position = getEmptySquare();
+			squares[position.x][position.y]->inside = "shell";
 		}
 	}
 
@@ -88,6 +88,14 @@ void Grid::generateGrid(int jellyfish, int shells) {
 					//surroundWithSeaweed(sf::Vector2i(x, y), true);
 				}
 			}
+		}
+	}
+
+	// Shell option B: Replace random seaweed with shells
+	if (NEW_MODE) {
+		for (int s = 0; s < shells; s++) {
+			sf::Vector2i position = getRandomSquare("weed");
+			squares[position.x][position.y]->inside = "shell";
 		}
 	}
 
@@ -224,6 +232,9 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 					else if (squares[x][y]->inside == "weed") {
 						ra::renderWeed(target, states, squares[x][y]->position);
 					}
+					else if (squares[x][y]->inside == "star") {
+						ra::renderStar(target, states, squares[x][y]->position);
+					}
 					else if (squares[x][y]->inside == "jelly") {
 						ra::renderJelly(target, states, squares[x][y]->position);
 					}
@@ -284,6 +295,20 @@ sf::Vector2i Grid::getEmptySquare(bool preferBottom) {
 			output.y = std::rand() % 10;
 		}
 		if (squares[output.x][output.y] && squares[output.x][output.y]->inside == "") {
+			// This output is compliant, return it
+			return output;
+		}
+	}
+	// On failure, returns the top left corner
+	return sf::Vector2i(0, 0);
+}
+
+sf::Vector2i Grid::getRandomSquare(std::string type) {
+	for (int attempt = 0; attempt < 50; attempt++) {
+		sf::Vector2i output;
+		output.x = std::rand() % 10;
+		output.y = std::rand() % 10;
+		if (squares[output.x][output.y] && squares[output.x][output.y]->inside == type) {
 			// This output is compliant, return it
 			return output;
 		}

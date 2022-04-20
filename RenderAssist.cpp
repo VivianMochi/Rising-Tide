@@ -19,6 +19,14 @@ void ra::renderWeed(sf::RenderTarget &target, sf::RenderStates states, sf::Vecto
 	target.draw(sprite, states);
 }
 
+void ra::renderStar(sf::RenderTarget &target, sf::RenderStates states, sf::Vector2f position) {
+	sf::Sprite sprite(rm::loadTexture("Resource/Image/Squares.png"));
+	sprite.setPosition(position);
+	sprite.setTextureRect(sf::IntRect(10, 20, 10, 10));
+	sprite.setColor(cm::getWeedColor());
+	target.draw(sprite, states);
+}
+
 void ra::renderJelly(sf::RenderTarget &target, sf::RenderStates states, sf::Vector2f position) {
 	sf::Sprite sprite(rm::loadTexture("Resource/Image/Squares.png"));
 	sprite.setPosition(position);

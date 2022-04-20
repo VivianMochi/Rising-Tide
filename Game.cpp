@@ -24,7 +24,13 @@ Game::Game() {
 	std::cout << "\n  Here are some tips for jelly hunting:\n";
 	std::cout << "    - Left click to dig, and right click to flag\n";
 	std::cout << "    - The row indicators tell how many jellies are in each row\n";
-	std::cout << "    - Seaweed means a jelly is nearby\n";
+	if (NEW_MODE) {
+		std::cout << "    - Seaweed (and shells) mean one or two jellies are nearby\n";
+		std::cout << "    - Starfish mean three or more jellies are nearby\n";
+	}
+	else {
+		std::cout << "    - Seaweed means a jelly is nearby\n";
+	}
 	std::cout << "    - Water rises when you dig, and a lot if you dig a jelly\n";
 	std::cout << "    - Flooding the board is a game over!\n";
 	std::cout << "    - Found shells can be used to reset the water level\n";
