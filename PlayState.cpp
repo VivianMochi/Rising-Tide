@@ -50,9 +50,14 @@ void PlayState::init() {
 		initEntity(*buttonPaletteRight);
 		buttons.addButton(buttonPaletteRight);
 	}
-	buttonMute = std::make_shared<Button>("Mute", rm::loadTexture("Resource/Image/MuteButton.png"), sf::IntRect(saveData[muted] ? 11 : 0, 0, 12, 14));
-	initEntity(*buttonMute);
-	buttons.addButton(buttonMute);
+	barMusic = std::make_shared<ButtonBar>("Music", 5);
+	initEntity(*barMusic);
+	barMusic->selectSegment(saveData[musicVolume]);
+	buttons.addButton(barMusic);
+	barSound = std::make_shared<ButtonBar>("Sound", 5);
+	initEntity(*barSound);
+	barSound->selectSegment(saveData[soundVolume]);
+	buttons.addButton(barSound);
 
 	initEntity(grid);
 	grid.setPosition(GRID_LEFT, getGame()->gameSize.y + 4);
@@ -88,9 +93,7 @@ void PlayState::init() {
 
 	// Load music
 	musicBase.openFromFile("Resource/Music/MusicBase.ogg");
-	if (saveData[muted] == 1) {
-		musicBase.setVolume(0);
-	}
+	musicBase.setVolume(100 * std::pow(saveData[musicVolume] / 4.0f, 2));
 	musicBase.setLoop(true);
 
 	musicActive.openFromFile("Resource/Music/MusicActive.ogg");
@@ -176,9 +179,15 @@ void PlayState::gotEvent(sf::Event event) {
 					soundSelect.play();
 					save();
 				}
-				else if (clickedButton == "Mute") {
-					saveData[muted] = !saveData[muted];
-					buttonMute->baseRect = sf::IntRect(saveData[muted] ? 11 : 0, 0, 12, 14);
+				else if (clickedButton.substr(0, 5) == "Music") {
+					int value = std::stoi(clickedButton.substr(5));
+					saveData[musicVolume] = value;
+					soundSelect.play();
+					save();
+				}
+				else if (clickedButton.substr(0, 5) == "Sound") {
+					int value = std::stoi(clickedButton.substr(5));
+					saveData[soundVolume] = value;
 					soundSelect.play();
 					save();
 				}
@@ -391,8 +400,10 @@ void PlayState::update(sf::Time elapsed) {
 		buttonPaletteRight->setPosition(leftPane.getPosition() + sf::Vector2f(38, PALETTE_BUTTONS_TOP));
 		buttonPaletteRight->enabled = !atRightEnd && buttonsActive;
 	}
-	buttonMute->setPosition(rightPane.getPosition() + sf::Vector2f(57, 105));
-	buttonMute->enabled = buttonsActive;
+	barMusic->setPosition(rightPane.getPosition() + sf::Vector2f(25, 80));
+	barMusic->enabled = buttonsActive;
+	barSound->setPosition(rightPane.getPosition() + sf::Vector2f(25, 92));
+	barSound->enabled = buttonsActive;
 	buttons.update(elapsed);
 
 	// Update water
@@ -401,51 +412,59 @@ void PlayState::update(sf::Time elapsed) {
 	water.setPosition(grid.getPosition() + sf::Vector2f(0, 100));
 
 	// Update music
-	float volumeBase = 100;
+	float musicVolumeModifier = std::pow(saveData[musicVolume] / 4.0f, 2);
+	float volumeBase = 100 * musicVolumeModifier;
 	float volumeActive = 0;
 	float volumeBeat = 0;
 	float volumeWarning = 0;
-	if (saveData[muted] == 1) {
-		volumeBase = 0;
-		volumeActive = 0;
-		volumeBeat = 0;
-		volumeWarning = 0;
-	}
-	else if (phase == playing) {
+	if (phase == playing && musicVolumeModifier != 0) {
 		if (waterBar.waterLevel >= 3) {
-			volumeActive = 100;
+			volumeActive = 100 * musicVolumeModifier;
 		}
 		else if (waterBar.waterLevel >= 2) {
-			volumeActive = 50;
+			volumeActive = 50 * musicVolumeModifier;
 		}
 		else if (waterBar.waterLevel >= 1) {
-			volumeActive = 25;
+			volumeActive = 25 * musicVolumeModifier;
 		}
 
 		if (waterBar.waterLevel >= 6) {
-			volumeBeat = 100;
+			volumeBeat = 100 * musicVolumeModifier;
 		}
 		else if (waterBar.waterLevel >= 5) {
-			volumeBeat = 50;
+			volumeBeat = 50 * musicVolumeModifier;
 		}
 		else if (waterBar.waterLevel >= 4) {
-			volumeBeat = 25;
+			volumeBeat = 25 * musicVolumeModifier;
 		}
 
 		if (waterBar.waterLevel >= 9) {
-			volumeWarning = 100;
+			volumeWarning = 100 * musicVolumeModifier;
 		}
 		else if (waterBar.waterLevel >= 8) {
-			volumeWarning = 50;
+			volumeWarning = 50 * musicVolumeModifier;
 		}
 		else if (waterBar.waterLevel >= 7) {
-			volumeWarning = 25;
+			volumeWarning = 25 * musicVolumeModifier;
 		}
 	}
 	adjustMusicVolume(musicBase, volumeBase, elapsed.asSeconds() * 3);
 	adjustMusicVolume(musicActive, volumeActive, elapsed.asSeconds() * 3);
 	adjustMusicVolume(musicBeat, volumeBeat, elapsed.asSeconds() * 3);
 	adjustMusicVolume(musicWarning, volumeWarning, elapsed.asSeconds() * 3);
+
+	// Update sound effect volumes
+	float soundVolumeModifier = std::pow(saveData[soundVolume] / 4.0f, 2);
+	soundDig.setVolume(100 * soundVolumeModifier);
+	soundFlag.setVolume(100 * soundVolumeModifier);
+	soundUnflag.setVolume(100 * soundVolumeModifier);
+	soundShellFind.setVolume(100 * soundVolumeModifier);
+	soundShellUse.setVolume(100 * soundVolumeModifier);
+	soundSelect.setVolume(100 * soundVolumeModifier);
+	soundError.setVolume(100 * soundVolumeModifier);
+	soundJelly.setVolume(100 * soundVolumeModifier);
+	soundScore.setVolume(100 * soundVolumeModifier);
+	soundStart.setVolume(100 * soundVolumeModifier);
 
 	// Update background position
 	title.setPosition(getGame()->gameSize.x / 2 - 80 / 2, menuPaneY + 32);
@@ -570,7 +589,8 @@ void PlayState::load() {
 	saveData[best] = 0;
 	saveData[selectedPalette] = -1;
 	saveData[unlockedPalettes] = 1;
-	saveData[muted] = 0;
+	saveData[musicVolume] = 2;
+	saveData[soundVolume] = 2;
 
 	std::ifstream saveFile("Save.txt");
 	if (saveFile.is_open()) {

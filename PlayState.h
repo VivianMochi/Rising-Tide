@@ -7,6 +7,7 @@
 #include "BitmapText.h"
 #include "WaterBar.h"
 #include "ButtonManager.h"
+#include "ButtonBar.h"
 #include <SFML/Audio.hpp>
 #include <map>
 
@@ -87,7 +88,8 @@ private:
 	const std::string selectedPalette = "palette";
 	// The number of palettes that have been unlocked
 	const std::string unlockedPalettes = "unlocked";
-	const std::string muted = "muted";
+	const std::string musicVolume = "music";
+	const std::string soundVolume = "sound";
 
 	ButtonManager buttons;
 
@@ -99,7 +101,8 @@ private:
 	std::shared_ptr<Button> buttonPaletteLeft;
 	std::shared_ptr<Button> buttonPaletteLink;
 	std::shared_ptr<Button> buttonPaletteRight;
-	std::shared_ptr<Button> buttonMute;
+	std::shared_ptr<ButtonBar> barMusic;
+	std::shared_ptr<ButtonBar> barSound;
 
 	Grid grid;
 	Water water;

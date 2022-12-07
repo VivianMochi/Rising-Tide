@@ -2,7 +2,6 @@
 
 #include "Entity.h"
 
-
 class Button : public Entity {
 public:
 	Button(std::string text = "");
@@ -11,7 +10,7 @@ public:
 	virtual void init() override;
 	virtual void update(sf::Time elapsed) override;
 
-	std::string clickPosition(sf::Vector2f position);
+	virtual std::string clickPosition(sf::Vector2f position);
 
 	std::string text = "";
 	sf::IntRect baseRect;
