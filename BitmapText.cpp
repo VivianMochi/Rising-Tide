@@ -47,6 +47,10 @@ void BitmapText::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 		for (int i = 0; i < text.length(); i++) {
 			glyph.setPosition(currentPosition);
 			char character = std::toupper(text[i]);
+			// This is super hacky
+			if (character == '1' && monowidth) {
+				glyph.move(1, 0);
+			}
 			if (character < '@') {
 				glyph.setTextureRect(sf::IntRect(8 * (character - ' '), 0, 8, 8));
 			}
@@ -83,7 +87,7 @@ int BitmapText::getGlyphWidth(char character) const {
 	else if (character == '(' || character == ')' || character == '[' || character == ']') {
 		return 3;
 	}
-	else if (character == '1' || character == 'I' || character == '/' || character == '\\' || character == ' ') {
+	else if ((character == '1' && !monowidth) || character == 'I' || character == '/' || character == '\\' || character == ' ') {
 		return 4;
 	}
 	else if (character == 'M' || character == 'W') {

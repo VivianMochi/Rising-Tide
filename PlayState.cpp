@@ -200,6 +200,8 @@ void PlayState::gotEvent(sf::Event event) {
 						findItem(found);
 
 						playDigSound();
+
+						levelTimeTicking = true;
 					}
 				}
 			}
@@ -274,6 +276,9 @@ void PlayState::update(sf::Time elapsed) {
 	cm::updatePalette(elapsed);
 
 	// Update timers
+	if (phase == playing && levelTimeTicking) {
+		levelTime += elapsed.asSeconds();
+	}
 	flashTime += elapsed.asSeconds();
 	if (flashTime >= 0.2) {
 		flashTime = 0;
@@ -521,6 +526,37 @@ void PlayState::render(sf::RenderWindow &window) {
 	}
 	window.draw(text);
 
+	// Render level time
+	sf::Vector2f timerPosition = leftPane.getPosition() + sf::Vector2f(2, 60);
+	sf::Vector2f timerTextRight = timerPosition + sf::Vector2f(51, 2);
+	std::string timeMinutes = std::to_string((int)(levelTime / 60));
+	if (timeMinutes.size() == 1) {
+		timeMinutes = "0" + timeMinutes;
+	}
+	std::string timeSeconds = std::to_string((int)(levelTime) % 60);
+	if (timeSeconds.size() == 1) {
+		timeSeconds = "0" + timeSeconds;
+	}
+	std::string timeCentiseconds = std::to_string((int)(levelTime * 100) % 100);
+	if (timeCentiseconds.size() == 1) {
+		timeCentiseconds = "0" + timeCentiseconds;
+	}
+	ra::renderUIBox(window, sf::RenderStates::Default, timerPosition, 55, 1);
+	text.monowidth = true;
+	text.setText(timeMinutes + ":");
+	text.setPosition(timerTextRight - sf::Vector2f(31 + text.getWidth(), 0));
+	text.setColor(cm::getTextColor());
+	window.draw(text);
+
+	text.setText(timeSeconds + ":");
+	text.setPosition(timerTextRight - sf::Vector2f(14 + text.getWidth(), 0));
+	window.draw(text);
+
+	text.setText(timeCentiseconds);
+	text.setPosition(timerTextRight - sf::Vector2f(text.getWidth(), 0));
+	window.draw(text);
+	text.monowidth = false;
+
 	// Score counts
 	text.setText(std::to_string(saveData[best]));
 	text.setPosition(rightPane.getPosition() + sf::Vector2f(40, 4));
@@ -690,6 +726,10 @@ void PlayState::loadLevel(int level) {
 	waterBar.resetSystem();
 
 	grid.generateGrid(jellies, 2 + std::rand() % 3);
+
+	// Reset time
+	levelTime = 0;
+	levelTimeTicking = false;
 }
 
 void PlayState::findItem(std::string item, bool flagged) {

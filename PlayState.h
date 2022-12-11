@@ -75,6 +75,8 @@ private:
 	int jellies = 0;
 	int flags = 0;
 	std::string levelName = "";
+	float levelTime = 0;
+	bool levelTimeTicking = false;
 
 	// Player stats
 	int score = 0;

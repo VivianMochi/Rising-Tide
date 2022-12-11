@@ -42,3 +42,15 @@ void ra::renderFlag(sf::RenderTarget &target, sf::RenderStates states, sf::Vecto
 	sprite.setColor(cm::getFlagColor());
 	target.draw(sprite, states);
 }
+
+void ra::renderUIBox(sf::RenderTarget &target, sf::RenderStates states, sf::Vector2f position, int width, int style) {
+	sf::Sprite sprite(rm::loadTexture("Resource/Image/UIBox.png"));
+	sprite.setPosition(position);
+	sprite.setTextureRect(sf::IntRect(0, 12 * style, width - 1, 12));
+	sprite.setColor(cm::getUIColor());
+	target.draw(sprite, states);
+
+	sprite.setPosition(position + sf::Vector2f(width - 1, 0));
+	sprite.setTextureRect(sf::IntRect(99, 12 * style, 1, 12));
+	target.draw(sprite, states);
+}

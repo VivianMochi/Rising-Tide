@@ -17,6 +17,8 @@ public:
 
 	std::string text;
 
+	bool monowidth = false;
+
 private:
 	void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 	int getGlyphWidth(char character) const;
