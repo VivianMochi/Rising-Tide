@@ -66,6 +66,7 @@ private:
 	float scoreFlashTime = 0;
 	float bestFlashTime = 0;
 	float shellFlashTime = 0;
+	float alertFlashTime = 0;
 
 	float submitTime = 0;
 	bool poppingFlags = false;

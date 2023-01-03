@@ -92,19 +92,20 @@ void PlayState::init() {
 	soundStart.setBuffer(rm::loadSoundBuffer("Resource/Sound/Start.wav"));
 
 	// Load music
-	musicBase.openFromFile("Resource/Music/MusicBase.ogg");
+	std::string song = "Tide";
+	musicBase.openFromFile("Resource/Music/" + song + "0.ogg");
 	musicBase.setVolume(100 * std::pow(saveData[musicVolume] / 4.0f, 2));
 	musicBase.setLoop(true);
 
-	musicActive.openFromFile("Resource/Music/MusicActive.ogg");
+	musicActive.openFromFile("Resource/Music/" + song + "1.ogg");
 	musicActive.setVolume(0);
 	musicActive.setLoop(true);
 
-	musicBeat.openFromFile("Resource/Music/MusicBeat.ogg");
+	musicBeat.openFromFile("Resource/Music/" + song + "2.ogg");
 	musicBeat.setVolume(0);
 	musicBeat.setLoop(true);
 
-	musicWarning.openFromFile("Resource/Music/MusicWarning.ogg");
+	musicWarning.openFromFile("Resource/Music/" + song + "3.ogg");
 	musicWarning.setVolume(0);
 	musicWarning.setLoop(true);
 
@@ -195,9 +196,16 @@ void PlayState::gotEvent(sf::Event event) {
 					// Left click on board
 					std::string found = grid.digPosition(getGame()->getCursorPosition() - grid.getPosition());
 					if (found != "none") {
+						int lastWaterLevel = waterBar.waterLevel;
+
 						waterBar.increment();
 
 						findItem(found);
+
+						if (waterBar.waterLevel >= 7 && waterBar.waterLevel > lastWaterLevel) {
+							flashTime = 0;
+							alertFlashTime = 1;
+						}
 
 						playDigSound();
 
@@ -303,6 +311,10 @@ void PlayState::update(sf::Time elapsed) {
 	flagFlashTime -= elapsed.asSeconds();
 	if (flagFlashTime < 0) {
 		flagFlashTime = 0;
+	}
+	alertFlashTime -= elapsed.asSeconds();
+	if (alertFlashTime < 0) {
+		alertFlashTime = 0;
 	}
 
 	// Update camera position
@@ -527,7 +539,8 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(text);
 
 	// Render level time
-	sf::Vector2f timerPosition = leftPane.getPosition() + sf::Vector2f(2, 60);
+	//sf::Vector2f timerPosition = leftPane.getPosition() + sf::Vector2f(2, 60);
+	sf::Vector2f timerPosition = rightPane.getPosition() + sf::Vector2f(14, 107);
 	sf::Vector2f timerTextRight = timerPosition + sf::Vector2f(51, 2);
 	std::string timeMinutes = std::to_string((int)(levelTime / 60));
 	if (timeMinutes.size() == 1) {
@@ -602,6 +615,20 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(grid);
 
 	window.draw(water);
+
+	// Render warning
+	if (phase == playing && waterBar.waterLevel >= 7 && waterBar.waterLevel <= 9) {
+		sf::Color dangerColor = cm::getDisabledTextColor();
+		if (alertFlashTime > 0 && flashTime < 0.1) {
+			dangerColor = cm::getFlashColor();
+		}
+		text.setText("Danger");
+		text.setPosition(getGame()->gameSize.x / 2 - text.getWidth() / 2, grid.getPosition().y - 10);
+		text.setColor(dangerColor);
+		window.draw(text);
+		ra::renderIcon(window, sf::RenderStates::Default, text.getPosition() + sf::Vector2f(-11, -1), sf::Vector2f(1, 3), dangerColor);
+		ra::renderIcon(window, sf::RenderStates::Default, text.getPosition() + sf::Vector2f(text.getWidth() + 1, -1), sf::Vector2f(1, 3), dangerColor);
+	}
 }
 
 void PlayState::initEntity(Entity &entity) {
