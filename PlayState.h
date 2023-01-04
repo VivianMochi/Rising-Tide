@@ -25,9 +25,10 @@ const bool PALETTE_SELECT_ENABLED = true;
 
 const bool NEW_MODE = true;
 
-const bool DEBUG_ENABLED = false;
+const bool DEBUG_ENABLED = true;
 const bool PALETTE_SELECT_DEBUG_ENABLED = false;
 const bool DEBUG_MUSIC_DISABLED = false;
+const bool DEBUG_DEMO_MODE = true;
 
 class PlayState : public State {
 public:
@@ -57,6 +58,8 @@ private:
 	// Do the effect of digging up an item, unless flagged is true
 	void findItem(std::string item, bool flagged = false);
 	void submit();
+
+	void goToMenu();
 
 	float cameraY = -25;
 	float menuPaneY = 0;
@@ -93,6 +96,8 @@ private:
 	const std::string unlockedPalettes = "unlocked";
 	const std::string musicVolume = "music";
 	const std::string soundVolume = "sound";
+	bool showTimer = true;
+	bool showVolume = false;
 
 	ButtonManager buttons;
 

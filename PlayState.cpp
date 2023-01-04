@@ -29,7 +29,7 @@ void PlayState::init() {
 	buttons.addButton(buttonStart);
 	buttonExit = std::make_shared<Button>("Exit");
 	initEntity(*buttonExit);
-	buttons.addButton(buttonExit);
+	//buttons.addButton(buttonExit);
 	buttonSubmit = std::make_shared<Button>("Submit");
 	initEntity(*buttonSubmit);
 	buttons.addButton(buttonSubmit);
@@ -128,7 +128,7 @@ void PlayState::gotEvent(sf::Event event) {
 				if (clickedButton == "Start") {
 					soundStart.play();
 					phase = playing;
-					if (level == -1) {
+					if (DEBUG_DEMO_MODE || level == -1) {
 						loadLevel(0);
 					}
 				}
@@ -157,7 +157,7 @@ void PlayState::gotEvent(sf::Event event) {
 					}
 				}
 				else if (clickedButton == "Menu") {
-					phase = menu;
+					goToMenu();
 					soundSelect.play();
 				}
 				else if (clickedButton == "PaletteLeft") {
@@ -266,7 +266,17 @@ void PlayState::gotEvent(sf::Event event) {
 	if (event.type == sf::Event::KeyPressed) {
 		if (event.key.code == sf::Keyboard::Escape) {
 			if (phase == playing) {
-				phase = menu;
+				goToMenu();
+			}
+			else if (DEBUG_DEMO_MODE && phase == loss) {
+				phase = playing;
+				loadLevel(0);
+				buttonSubmit->text = "Submit";
+
+				score = 0;
+				shells = 0;
+
+				goToMenu();
 			}
 		}
 
@@ -286,6 +296,14 @@ void PlayState::gotEvent(sf::Event event) {
 			}
 			else if (event.key.code == sf::Keyboard::Up) {
 				findItem("shell");
+			}
+
+			// Demo keys
+			if (event.key.code == sf::Keyboard::O) {
+				showTimer = !showTimer;
+			}
+			if (event.key.code == sf::Keyboard::P) {
+				showVolume = !showVolume;
 			}
 		}
 	}
@@ -429,9 +447,9 @@ void PlayState::update(sf::Time elapsed) {
 		buttonPaletteRight->setPosition(leftPane.getPosition() + sf::Vector2f(38, PALETTE_BUTTONS_TOP));
 		buttonPaletteRight->enabled = !atRightEnd && buttonsActive;
 	}
-	barMusic->setPosition(rightPane.getPosition() + sf::Vector2f(25, 80));
+	barMusic->setPosition(rightPane.getPosition() + sf::Vector2f(showVolume ? 25 : 1000, 80));
 	barMusic->enabled = buttonsActive;
-	barSound->setPosition(rightPane.getPosition() + sf::Vector2f(25, 92));
+	barSound->setPosition(rightPane.getPosition() + sf::Vector2f(showVolume ? 25 : 1000, 92));
 	barSound->enabled = buttonsActive;
 	buttons.update(elapsed);
 
@@ -552,36 +570,38 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(text);
 
 	// Render level time
-	//sf::Vector2f timerPosition = leftPane.getPosition() + sf::Vector2f(2, 60);
-	sf::Vector2f timerPosition = rightPane.getPosition() + sf::Vector2f(14, 107);
-	sf::Vector2f timerTextRight = timerPosition + sf::Vector2f(51, 2);
-	std::string timeMinutes = std::to_string((int)(levelTime / 60));
-	if (timeMinutes.size() == 1) {
-		timeMinutes = "0" + timeMinutes;
-	}
-	std::string timeSeconds = std::to_string((int)(levelTime) % 60);
-	if (timeSeconds.size() == 1) {
-		timeSeconds = "0" + timeSeconds;
-	}
-	std::string timeCentiseconds = std::to_string((int)(levelTime * 100) % 100);
-	if (timeCentiseconds.size() == 1) {
-		timeCentiseconds = "0" + timeCentiseconds;
-	}
-	ra::renderUIBox(window, sf::RenderStates::Default, timerPosition, 55, 1);
-	text.monowidth = true;
-	text.setText(timeMinutes + ":");
-	text.setPosition(timerTextRight - sf::Vector2f(31 + text.getWidth(), 0));
-	text.setColor(cm::getTextColor());
-	window.draw(text);
+	if (showTimer) {
+		//sf::Vector2f timerPosition = leftPane.getPosition() + sf::Vector2f(2, 60);
+		sf::Vector2f timerPosition = rightPane.getPosition() + sf::Vector2f(14, 107);
+		sf::Vector2f timerTextRight = timerPosition + sf::Vector2f(51, 2);
+		std::string timeMinutes = std::to_string((int)(levelTime / 60));
+		if (timeMinutes.size() == 1) {
+			timeMinutes = "0" + timeMinutes;
+		}
+		std::string timeSeconds = std::to_string((int)(levelTime) % 60);
+		if (timeSeconds.size() == 1) {
+			timeSeconds = "0" + timeSeconds;
+		}
+		std::string timeCentiseconds = std::to_string((int)(levelTime * 100) % 100);
+		if (timeCentiseconds.size() == 1) {
+			timeCentiseconds = "0" + timeCentiseconds;
+		}
+		ra::renderUIBox(window, sf::RenderStates::Default, timerPosition, 55, 1);
+		text.monowidth = true;
+		text.setText(timeMinutes + ":");
+		text.setPosition(timerTextRight - sf::Vector2f(31 + text.getWidth(), 0));
+		text.setColor(cm::getTextColor());
+		window.draw(text);
 
-	text.setText(timeSeconds + ":");
-	text.setPosition(timerTextRight - sf::Vector2f(14 + text.getWidth(), 0));
-	window.draw(text);
+		text.setText(timeSeconds + ":");
+		text.setPosition(timerTextRight - sf::Vector2f(14 + text.getWidth(), 0));
+		window.draw(text);
 
-	text.setText(timeCentiseconds);
-	text.setPosition(timerTextRight - sf::Vector2f(text.getWidth(), 0));
-	window.draw(text);
-	text.monowidth = false;
+		text.setText(timeCentiseconds);
+		text.setPosition(timerTextRight - sf::Vector2f(text.getWidth(), 0));
+		window.draw(text);
+		text.monowidth = false;
+	}
 
 	// Score counts
 	text.setText(std::to_string(saveData[best]));
@@ -805,5 +825,17 @@ void PlayState::submit() {
 	phase = submitting;
 	poppingFlags = false;
 	submitTime = SUBMIT_INTERVAL;
+}
+
+void PlayState::goToMenu() {
+	phase = menu;
+
+	if (DEBUG_DEMO_MODE) {
+		score = 0;
+		shells = 0;
+
+		saveData[selectedPalette] = -1;
+		cm::selectPalette(0);
+	}
 }
 
