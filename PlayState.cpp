@@ -662,6 +662,14 @@ void PlayState::render(sf::RenderWindow &window) {
 		ra::renderIcon(window, sf::RenderStates::Default, text.getPosition() + sf::Vector2f(-11, -1), sf::Vector2f(1, 3), dangerColor);
 		ra::renderIcon(window, sf::RenderStates::Default, text.getPosition() + sf::Vector2f(text.getWidth() + 1, -1), sf::Vector2f(1, 3), dangerColor);
 	}
+
+	// Render game over text
+	if (phase == loss) {
+		text.setText("Game Over");
+		text.setPosition(getGame()->gameSize.x / 2 - text.getWidth() / 2, grid.getPosition().y - 10);
+		text.setColor(cm::getDisabledTextColor());
+		window.draw(text);
+	}
 }
 
 void PlayState::initEntity(Entity &entity) {
