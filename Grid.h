@@ -16,6 +16,8 @@ struct Square {
 	bool dug = false;
 	// If this square has been flagged
 	bool flagged = false;
+	// If this square has been marked with an X
+	bool marked = false;
 
 	// 0-3, purely cosmetic
 	int spriteIndex = 0;
@@ -55,6 +57,10 @@ public:
 	// onlyRemove will only allow the removal of existing flags, not place new ones
 	// Returns 1 if a flag was placed, -1 if a flag was removed, or 0 if nothing happened
 	int flagPosition(sf::Vector2f position, bool onlyRemove);
+
+	// Draw an X in the sand at the position relative to the grid
+	// Returns true if an X was placed
+	bool markPosition(sf::Vector2f position);
 
 	// Pop open the top left unpopped grid square and return what was inside
 	// Flagged determines whether this only opens flagged squares or unflagged squares

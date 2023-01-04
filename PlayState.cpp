@@ -90,6 +90,7 @@ void PlayState::init() {
 	soundJelly.setBuffer(rm::loadSoundBuffer("Resource/Sound/Jelly.wav"));
 	soundScore.setBuffer(rm::loadSoundBuffer("Resource/Sound/Score.wav"));
 	soundStart.setBuffer(rm::loadSoundBuffer("Resource/Sound/Start.wav"));
+	soundWater.setBuffer(rm::loadSoundBuffer("Resource/Sound/Water.wav"));
 
 	// Load music
 	std::string song = "Tide";
@@ -202,9 +203,13 @@ void PlayState::gotEvent(sf::Event event) {
 
 						findItem(found);
 
-						if (waterBar.waterLevel >= 7 && waterBar.waterLevel > lastWaterLevel) {
-							flashTime = 0;
-							alertFlashTime = 1;
+						if (waterBar.waterLevel > lastWaterLevel) {
+							//soundWater.play();
+
+							if (waterBar.waterLevel >= 7) {
+								flashTime = 0;
+								alertFlashTime = 1;
+							}
 						}
 
 						playDigSound();
@@ -248,6 +253,13 @@ void PlayState::gotEvent(sf::Event event) {
 					flashTime = 0;
 					flagFlashTime = 0.5;
 				}
+			}
+		}
+		else if (event.mouseButton.button == sf::Mouse::Middle) {
+			if (phase == playing) {
+				// Middle click in game
+				bool markResult = grid.markPosition(getGame()->getCursorPosition() - grid.getPosition());
+				playDigSound();
 			}
 		}
 	}
@@ -482,6 +494,7 @@ void PlayState::update(sf::Time elapsed) {
 	soundJelly.setVolume(100 * soundVolumeModifier);
 	soundScore.setVolume(100 * soundVolumeModifier);
 	soundStart.setVolume(100 * soundVolumeModifier);
+	soundWater.setVolume(100 * soundVolumeModifier);
 
 	// Update background position
 	title.setPosition(getGame()->gameSize.x / 2 - 80 / 2, menuPaneY + 32);

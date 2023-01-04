@@ -147,6 +147,7 @@ int Grid::flagPosition(sf::Vector2f position, bool onlyRemove) {
 					}
 					else {
 						squares[x][y]->flagged = !squares[x][y]->flagged;
+						squares[x][y]->marked = false;
 						checkTabCompletion();
 						if (squares[x][y]->flagged) {
 							return 1;
@@ -160,6 +161,19 @@ int Grid::flagPosition(sf::Vector2f position, bool onlyRemove) {
 		}
 	}
 	return 0;
+}
+
+bool Grid::markPosition(sf::Vector2f position) {
+	for (int x = 0; x < GRID_WIDTH; x++) {
+		for (int y = 0; y < GRID_HEIGHT; y++) {
+			if (squares[x][y]) {
+				if (sf::FloatRect(squares[x][y]->position, sf::Vector2f(10, 10)).contains(position) && !squares[x][y]->dug && !squares[x][y]->flagged) {
+					squares[x][y]->marked = !squares[x][y]->marked;
+					return squares[x][y]->marked;
+				}
+			}
+		}
+	}
 }
 
 std::string Grid::popSquare(bool flagged) {
@@ -243,6 +257,9 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 				// Draw flag
 				if (squares[x][y]->flagged) {
 					ra::renderFlag(target, states, squares[x][y]->position, squares[x][y]->dug);
+				}
+				else if (!squares[x][y]->dug && squares[x][y]->marked) {
+					ra::renderIcon(target, states, squares[x][y]->position, sf::Vector2f(0, 2), cm::getSandColor());
 				}
 			}
 		}

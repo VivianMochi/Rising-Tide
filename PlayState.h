@@ -130,6 +130,7 @@ private:
 	sf::Sound soundJelly;
 	sf::Sound soundScore;
 	sf::Sound soundStart;
+	sf::Sound soundWater;
 
 	sf::Music musicBase;
 	sf::Music musicActive;
