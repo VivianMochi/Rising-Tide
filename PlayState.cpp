@@ -29,7 +29,9 @@ void PlayState::init() {
 	buttons.addButton(buttonStart);
 	buttonExit = std::make_shared<Button>("Exit");
 	initEntity(*buttonExit);
-	//buttons.addButton(buttonExit);
+	if (!DEBUG_DEMO_MODE) {
+		buttons.addButton(buttonExit);
+	}
 	buttonSubmit = std::make_shared<Button>("Submit");
 	initEntity(*buttonSubmit);
 	buttons.addButton(buttonSubmit);

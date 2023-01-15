@@ -25,10 +25,10 @@ const bool PALETTE_SELECT_ENABLED = true;
 
 const bool NEW_MODE = true;
 
-const bool DEBUG_ENABLED = true;
+const bool DEBUG_ENABLED = false;
 const bool PALETTE_SELECT_DEBUG_ENABLED = false;
 const bool DEBUG_MUSIC_DISABLED = false;
-const bool DEBUG_DEMO_MODE = true;
+const bool DEBUG_DEMO_MODE = false;
 
 class PlayState : public State {
 public:
