@@ -12,6 +12,12 @@ void ButtonManager::update(sf::Time elapsed) {
 	}
 }
 
+void ButtonManager::initButton(std::shared_ptr<Button> button) {
+	button->setState(state);
+	button->init();
+	buttons.push_back(button);
+}
+
 void ButtonManager::addButton(std::shared_ptr<Button> button) {
 	buttons.push_back(button);
 }

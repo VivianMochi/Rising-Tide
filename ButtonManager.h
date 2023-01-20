@@ -9,6 +9,7 @@ public:
 	virtual void init() override;
 	virtual void update(sf::Time elapsed) override;
 
+	void initButton(std::shared_ptr<Button> button);
 	void addButton(std::shared_ptr<Button> button);
 
 	std::string clickPosition(sf::Vector2f position);

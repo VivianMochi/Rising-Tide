@@ -27,6 +27,9 @@ void PlayState::init() {
 	buttonStart = std::make_shared<Button>("Start");
 	initEntity(*buttonStart);
 	buttons.addButton(buttonStart);
+	buttonShop = std::make_shared<Button>("Shop");
+	initEntity(*buttonShop);
+	buttons.addButton(buttonShop);
 	buttonExit = std::make_shared<Button>("Exit");
 	initEntity(*buttonExit);
 	if (!DEBUG_DEMO_MODE) {
@@ -41,17 +44,17 @@ void PlayState::init() {
 	buttonMenu = std::make_shared<Button>("Menu");
 	initEntity(*buttonMenu);
 	buttons.addButton(buttonMenu);
-	if (PALETTE_SELECT_ENABLED) {
-		buttonPaletteLeft = std::make_shared<Button>("PaletteLeft", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(0, 0, 19, 10));
-		initEntity(*buttonPaletteLeft);
-		buttons.addButton(buttonPaletteLeft);
-		buttonPaletteLink = std::make_shared<Button>("PaletteLink", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(18, 0, 19, 10));
-		initEntity(*buttonPaletteLink);
-		buttons.addButton(buttonPaletteLink);
-		buttonPaletteRight = std::make_shared<Button>("PaletteRight", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(36, 0, 19, 10));
-		initEntity(*buttonPaletteRight);
-		buttons.addButton(buttonPaletteRight);
-	}
+
+	buttonPaletteLeft = std::make_shared<Button>("PaletteLeft", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(0, 0, 19, 10));
+	initEntity(*buttonPaletteLeft);
+	buttons.addButton(buttonPaletteLeft);
+	buttonPaletteLink = std::make_shared<Button>("PaletteLink", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(18, 0, 19, 10));
+	initEntity(*buttonPaletteLink);
+	buttons.addButton(buttonPaletteLink);
+	buttonPaletteRight = std::make_shared<Button>("PaletteRight", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(36, 0, 19, 10));
+	initEntity(*buttonPaletteRight);
+	buttons.addButton(buttonPaletteRight);
+
 	barMusic = std::make_shared<ButtonBar>("Music", 5);
 	initEntity(*barMusic);
 	barMusic->selectSegment(saveData[musicVolume]);
@@ -67,6 +70,8 @@ void PlayState::init() {
 	initEntity(water);
 
 	initEntity(waterBar);
+
+	initEntity(shop);
 
 	// Load sprites
 	leftPane.setTexture(rm::loadTexture("Resource/Image/LeftPane.png"));
@@ -133,6 +138,11 @@ void PlayState::gotEvent(sf::Event event) {
 					if (DEBUG_DEMO_MODE || level == -1) {
 						loadLevel(0);
 					}
+				}
+				else if (clickedButton == "Shop") {
+					phase = shopping;
+					shop.setActive(true);
+					soundSelect.play();
 				}
 				else if (clickedButton == "Exit") {
 					getGame()->exit();
@@ -239,6 +249,17 @@ void PlayState::gotEvent(sf::Event event) {
 					shells = 0;
 				}
 			}
+			else if (phase == shopping) {
+				if (clickedButton == "") {
+					clickedButton = shop.clickPosition(getGame()->getCursorPosition());
+				}
+
+				if (clickedButton == "Menu") {
+					shop.setActive(false);
+					goToMenu();
+					soundSelect.play();
+				}
+			}
 		}
 		else if (event.mouseButton.button == sf::Mouse::Right) {
 			if (phase == playing) {
@@ -265,9 +286,15 @@ void PlayState::gotEvent(sf::Event event) {
 			}
 		}
 	}
-	if (event.type == sf::Event::KeyPressed) {
+	else if (event.type == sf::Event::MouseWheelMoved) {
+		if (phase == shopping) {
+			shop.desiredScroll -= event.mouseWheel.delta * 26;
+		}
+	}
+	else if (event.type == sf::Event::KeyPressed) {
 		if (event.key.code == sf::Keyboard::Escape) {
-			if (phase == playing) {
+			if (phase == playing || phase == shopping) {
+				shop.setActive(false);
 				goToMenu();
 			}
 			else if (DEBUG_DEMO_MODE && phase == loss) {
@@ -299,12 +326,16 @@ void PlayState::gotEvent(sf::Event event) {
 			else if (event.key.code == sf::Keyboard::Up) {
 				findItem("shell");
 			}
+			else if (event.key.code == sf::Keyboard::Z) {
+				saveData[totalJellies] += sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) ? 10 : 1;
+				save();
+			}
 
 			// Demo keys
 			if (event.key.code == sf::Keyboard::O) {
 				showTimer = !showTimer;
 			}
-			if (event.key.code == sf::Keyboard::P) {
+			else if (event.key.code == sf::Keyboard::P) {
 				showVolume = !showVolume;
 			}
 		}
@@ -391,19 +422,24 @@ void PlayState::update(sf::Time elapsed) {
 		}
 	}
 
+	const bool inGame = (phase == playing || phase == submitting || phase == results || phase == loss);
+
+	// Update shop
+	shop.update(elapsed);
+
 	// Update grid
-	desiredY = getGame()->gameSize.y - 104;
-	if (phase == menu) {
-		desiredY = getGame()->gameSize.y + 4;
+	desiredY = getGame()->gameSize.y + 4;
+	if (inGame) {
+		desiredY = getGame()->gameSize.y - 104;
 	}
 	grid.move((sf::Vector2f(GRID_LEFT, desiredY) - grid.getPosition()) * elapsed.asSeconds() * 5.0f);
 	grid.xray = DEBUG_ENABLED && sf::Keyboard::isKeyPressed(sf::Keyboard::Down);
 	grid.update(elapsed);
 
 	// Update panes
-	float desiredX = 0;
-	if (phase == menu) {
-		desiredX = -71;
+	float desiredX = -71;
+	if (inGame) {
+		desiredX = 0;
 	}
 	leftPane.move((sf::Vector2f(desiredX, 0) - leftPane.getPosition()) * elapsed.asSeconds() * 5.0f);
 	leftPane.setColor(cm::getUIColor());
@@ -411,9 +447,9 @@ void PlayState::update(sf::Time elapsed) {
 	paletteSelect.setPosition(leftPane.getPosition() + sf::Vector2f(2, PALETTE_SELECT_TOP));
 	paletteSelect.setColor(cm::getUIColor());
 
-	desiredX = getGame()->gameSize.x - 71;
-	if (phase == menu) {
-		desiredX = getGame()->gameSize.x;
+	desiredX = getGame()->gameSize.x;
+	if (inGame) {
+		desiredX = getGame()->gameSize.x - 71;
 	}
 	rightPane.move((sf::Vector2f(desiredX, 0) - rightPane.getPosition()) * elapsed.asSeconds() * 5.0f);
 	rightPane.setColor(cm::getUIColor());
@@ -427,11 +463,14 @@ void PlayState::update(sf::Time elapsed) {
 	if ((phase == playing || phase == submitting) && waterBar.waterLevel >= 10) {
 		phase = loss;
 		buttonSubmit->text = "Restart";
+		saveData[totalJellies] += score;
+		save();
 	}
 
 	// Update buttons
 	bool buttonsActive = phase != submitting && phase != results && phase != loss;
 	buttonStart->setPosition(getGame()->gameSize.x / 2 - 55 / 2, menuPaneY + 87);
+	buttonShop->setPosition(getGame()->gameSize.x / 2 + 40, menuPaneY + 87);
 	buttonExit->setPosition(getGame()->gameSize.x / 2 - 55 / 2, menuPaneY + 105);
 	buttonSubmit->setPosition(leftPane.getPosition() + sf::Vector2f(2, 44));
 	buttonSubmit->enabled = phase != submitting;
@@ -439,16 +478,17 @@ void PlayState::update(sf::Time elapsed) {
 	buttonMenu->enabled = buttonsActive;
 	buttonShell->setPosition(rightPane.getPosition() + sf::Vector2f(14, 44));
 	buttonShell->enabled = shells > 0 && buttonsActive;
-	if (PALETTE_SELECT_ENABLED) {
-		bool atLeftEnd = cm::getCurrentPalette() == 0;
-		bool atRightEnd = cm::getCurrentPalette() >= cm::getTotalPalettes() - 1 || (!PALETTE_SELECT_DEBUG_ENABLED && cm::getCurrentPalette() >= saveData[unlockedPalettes] - 1);
-		buttonPaletteLeft->setPosition(leftPane.getPosition() + sf::Vector2f(2, PALETTE_BUTTONS_TOP));
-		buttonPaletteLeft->enabled = !atLeftEnd && buttonsActive;
-		buttonPaletteLink->setPosition(leftPane.getPosition() + sf::Vector2f(20, PALETTE_BUTTONS_TOP));
-		buttonPaletteLink->enabled = buttonsActive && saveData[selectedPalette] != -1;
-		buttonPaletteRight->setPosition(leftPane.getPosition() + sf::Vector2f(38, PALETTE_BUTTONS_TOP));
-		buttonPaletteRight->enabled = !atRightEnd && buttonsActive;
-	}
+	
+	float paletteSelectLeft = saveData[shopPaletteSelect] ? 2 : -1000;
+	bool atLeftEnd = cm::getCurrentPalette() == 0;
+	bool atRightEnd = cm::getCurrentPalette() >= cm::getTotalPalettes() - 1 || (!PALETTE_SELECT_DEBUG_ENABLED && cm::getCurrentPalette() >= saveData[unlockedPalettes] - 1);
+	buttonPaletteLeft->setPosition(leftPane.getPosition() + sf::Vector2f(paletteSelectLeft, PALETTE_BUTTONS_TOP));
+	buttonPaletteLeft->enabled = !atLeftEnd && buttonsActive;
+	buttonPaletteLink->setPosition(leftPane.getPosition() + sf::Vector2f(paletteSelectLeft + 18, PALETTE_BUTTONS_TOP));
+	buttonPaletteLink->enabled = buttonsActive && saveData[selectedPalette] != -1;
+	buttonPaletteRight->setPosition(leftPane.getPosition() + sf::Vector2f(paletteSelectLeft + 36, PALETTE_BUTTONS_TOP));
+	buttonPaletteRight->enabled = !atRightEnd && buttonsActive;
+
 	barMusic->setPosition(rightPane.getPosition() + sf::Vector2f(showVolume ? 25 : 1000, 80));
 	barMusic->enabled = buttonsActive;
 	barSound->setPosition(rightPane.getPosition() + sf::Vector2f(showVolume ? 25 : 1000, 92));
@@ -543,7 +583,7 @@ void PlayState::render(sf::RenderWindow &window) {
 
 	// Render panes
 	window.draw(leftPane);
-	if (PALETTE_SELECT_ENABLED) {
+	if (saveData[shopPaletteSelect]) {
 		window.draw(paletteSelect);
 	}
 	ra::renderJelly(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(3, 17));
@@ -637,7 +677,7 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(text);
 
 	// Palette name
-	if (PALETTE_SELECT_ENABLED) {
+	if (saveData[shopPaletteSelect]) {
 		text.setText(cm::getPaletteName(cm::getCurrentPalette()));
 		text.setPosition(paletteSelect.getPosition() + sf::Vector2f(27 - text.getWidth() / 2, 16));
 		text.setColor(cm::getTextColor());
@@ -672,6 +712,9 @@ void PlayState::render(sf::RenderWindow &window) {
 		text.setColor(cm::getDisabledTextColor());
 		window.draw(text);
 	}
+
+	// Render jelly shop
+	window.draw(shop);
 }
 
 void PlayState::initEntity(Entity &entity) {
@@ -692,6 +735,7 @@ void PlayState::save() {
 void PlayState::load() {
 	// Clear any old save data and initialize default values
 	saveData.clear();
+	saveData[totalJellies] = 0;
 	saveData[best] = 0;
 	saveData[selectedPalette] = -1;
 	saveData[unlockedPalettes] = 1;

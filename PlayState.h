@@ -8,6 +8,7 @@
 #include "WaterBar.h"
 #include "ButtonManager.h"
 #include "ButtonBar.h"
+#include "JellyShop.h"
 #include <SFML/Audio.hpp>
 #include <map>
 
@@ -21,14 +22,24 @@ const float SUBMIT_INTERVAL_BREAK = 1;
 const float PALETTE_SELECT_TOP = 82;
 const float PALETTE_BUTTONS_TOP = PALETTE_SELECT_TOP + 25;
 
-const bool PALETTE_SELECT_ENABLED = true;
-
 const bool NEW_MODE = true;
 
-const bool DEBUG_ENABLED = false;
+const bool DEBUG_ENABLED = true;
 const bool PALETTE_SELECT_DEBUG_ENABLED = false;
 const bool DEBUG_MUSIC_DISABLED = false;
 const bool DEBUG_DEMO_MODE = false;
+
+// SaveData keys
+// Total jellies
+const std::string totalJellies = "jellies";
+// The high score
+const std::string best = "best";
+// The selected palette (-1 is the code to link the palette to the current level)
+const std::string selectedPalette = "palette";
+// The number of palettes that have been unlocked
+const std::string unlockedPalettes = "unlocked";
+const std::string musicVolume = "music";
+const std::string soundVolume = "sound";
 
 class PlayState : public State {
 public:
@@ -48,7 +59,10 @@ public:
 		submitting,
 		results,
 		loss,
+		shopping,
 	} phase = menu;
+
+	std::map<std::string, int> saveData;
 
 private:
 	void adjustMusicVolume(sf::Music &music, float desiredVolume, float factor);
@@ -86,22 +100,14 @@ private:
 	int score = 0;
 	int shells = 0;
 
-	// Saved data
-	std::map<std::string, int> saveData;
-	// The high score
-	const std::string best = "best";
-	// The selected palette (-1 is the code to link the palette to the current level)
-	const std::string selectedPalette = "palette";
-	// The number of palettes that have been unlocked
-	const std::string unlockedPalettes = "unlocked";
-	const std::string musicVolume = "music";
-	const std::string soundVolume = "sound";
+	// Demo holdovers
 	bool showTimer = true;
 	bool showVolume = false;
 
 	ButtonManager buttons;
 
 	std::shared_ptr<Button> buttonStart;
+	std::shared_ptr<Button> buttonShop;
 	std::shared_ptr<Button> buttonExit;
 	std::shared_ptr<Button> buttonSubmit;
 	std::shared_ptr<Button> buttonShell;
@@ -114,6 +120,8 @@ private:
 
 	Grid grid;
 	Water water;
+
+	JellyShop shop;
 
 	sf::Sprite leftPane;
 	sf::Sprite rightPane;
