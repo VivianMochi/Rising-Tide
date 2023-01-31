@@ -61,7 +61,7 @@ void JellyShop::init() {
 
 void JellyShop::update(sf::Time elapsed) {
 	float desiredX = -89;
-	if (shopActive) {
+	if (shopActive && !aquariumFocused) {
 		desiredX = 0;
 	}
 	leftPane.move((sf::Vector2f(desiredX, 0) - leftPane.getPosition()) * elapsed.asSeconds() * 5.0f);
@@ -70,7 +70,7 @@ void JellyShop::update(sf::Time elapsed) {
 	leftBackdrop.setColor(cm::getUIColor());
 
 	desiredX = 240;
-	if (shopActive) {
+	if (shopActive && !aquariumFocused) {
 		desiredX = 88;
 	}
 	detailsPane.move((sf::Vector2f(desiredX, 72) - detailsPane.getPosition()) * elapsed.asSeconds() * 5.0f);
@@ -83,7 +83,7 @@ void JellyShop::update(sf::Time elapsed) {
 	if (desiredScroll > scrollMax) {
 		desiredScroll = scrollMax;
 	}
-	scroll += (desiredScroll - scroll) * elapsed.asSeconds() * 10.f;
+	scroll += (desiredScroll - scroll) * elapsed.asSeconds() * 15.0f;
 
 	// Update rows
 	PlayState *playState = dynamic_cast<PlayState*>(state);
@@ -114,13 +114,47 @@ void JellyShop::update(sf::Time elapsed) {
 		buttonBuy->enabled = true;
 	}
 	buttons.update(elapsed);
+
+	// Update aquarium
+	if (shopActive) {
+		// Todo: this logic should be somewhere cleaner
+		if (aquariumFocused && sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
+			aquariumFocused = false;
+		}
+
+		aquarium->focusTopRight = !aquariumFocused;
+
+		if (aquariumFocused) {
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+				aquarium->cameraFocus = "";
+				aquarium->desiredCameraPosition.y -= elapsed.asSeconds() * 100.f;
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+				aquarium->cameraFocus = "";
+				aquarium->desiredCameraPosition.x -= elapsed.asSeconds() * 100.f;
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+				aquarium->cameraFocus = "";
+				aquarium->desiredCameraPosition.y += elapsed.asSeconds() * 100.f;
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+				aquarium->cameraFocus = "";
+				aquarium->desiredCameraPosition.x += elapsed.asSeconds() * 100.f;
+			}
+		}
+		else {
+			aquarium->cameraFocus = "Test";
+		}
+	}
 }
 
 void JellyShop::setActive(bool active) {
 	this->shopActive = active;
 	desiredScroll = 0;
+	aquarium->focusTopRight = active;
 	if (active) {
 		selection = "";
+		aquariumFocused = false;
 	}
 }
 
@@ -134,6 +168,10 @@ std::string JellyShop::clickPosition(sf::Vector2f position) {
 			playState->saveData[selection] = 1;
 			playState->save();
 		}
+	}
+	else if (clickedButton == "" && position.x >= 89 && position.y <= 72) {
+		// Focused the aquarium
+		aquariumFocused = true;
 	}
 	else if (clickedButton == "" && position.y >= 16 && position.y <= 116) {
 		// Clicked a shop row

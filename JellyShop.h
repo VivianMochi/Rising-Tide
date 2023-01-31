@@ -4,6 +4,7 @@
 #include "ButtonManager.h"
 #include "ButtonBar.h"
 #include "ShopRow.h"
+#include "Aquarium.h"
 #include <map>
 
 const std::vector<std::string> sections = { "Modes", "Extras", "Palettes" };
@@ -41,6 +42,8 @@ public:
 
 	float desiredScroll = 0;
 
+	std::shared_ptr<Aquarium> aquarium;
+
 private:
 	virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 
@@ -50,6 +53,7 @@ private:
 	float scroll = 0;
 	float scrollMax = 0;
 	std::string selection = "";
+	bool aquariumFocused = false;
 
 	ButtonManager buttons;
 	std::shared_ptr<Button> buttonMenu;

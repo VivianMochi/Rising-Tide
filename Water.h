@@ -11,6 +11,8 @@ struct Segment {
 
 class Water : public Entity {
 public:
+	Water(int totalSegments = 50);
+
 	virtual void init() override;
 	virtual void update(sf::Time elapsed) override;
 

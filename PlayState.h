@@ -9,6 +9,7 @@
 #include "ButtonManager.h"
 #include "ButtonBar.h"
 #include "JellyShop.h"
+#include "Aquarium.h"
 #include <SFML/Audio.hpp>
 #include <map>
 
@@ -122,6 +123,8 @@ private:
 	Water water;
 
 	JellyShop shop;
+
+	std::shared_ptr<Aquarium> aquarium;
 
 	sf::Sprite leftPane;
 	sf::Sprite rightPane;

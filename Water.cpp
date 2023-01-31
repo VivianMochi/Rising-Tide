@@ -4,11 +4,15 @@
 #include "ResourceManager.h"
 #include "ColorManager.h"
 
-void Water::init() {
+Water::Water(int totalSegments) {
 	// Create segments
-	for (int i = 0; i < 50; i++) {
+	for (int i = 0; i < totalSegments; i++) {
 		segments.emplace_back();
 	}
+}
+
+void Water::init() {
+	
 }
 
 void Water::update(sf::Time elapsed) {
@@ -61,5 +65,12 @@ void Water::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	for (int i = 0; i < segments.size(); i++) {
 		segmentSprite.setPosition(i * 2, -segments[i].depth);
 		target.draw(segmentSprite, states);
+
+		sf::RectangleShape deepSegmentSprite(sf::Vector2f(2, 320 + segments[i].depth));
+		deepSegmentSprite.setPosition(segmentSprite.getPosition() + sf::Vector2f(0, 10));
+		sf::Color deepColor = cm::getWaterColor();
+		deepColor.a = 100;
+		deepSegmentSprite.setFillColor(deepColor);
+		target.draw(deepSegmentSprite, states);
 	}
 }

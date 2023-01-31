@@ -71,6 +71,10 @@ void PlayState::init() {
 
 	initEntity(waterBar);
 
+	aquarium = std::make_shared<Aquarium>();
+	initEntity(*aquarium);
+
+	shop.aquarium = aquarium;
 	initEntity(shop);
 
 	// Load sprites
@@ -142,6 +146,7 @@ void PlayState::gotEvent(sf::Event event) {
 				else if (clickedButton == "Shop") {
 					phase = shopping;
 					shop.setActive(true);
+					aquarium->setActive(true);
 					soundSelect.play();
 				}
 				else if (clickedButton == "Exit") {
@@ -256,6 +261,7 @@ void PlayState::gotEvent(sf::Event event) {
 
 				if (clickedButton == "Menu") {
 					shop.setActive(false);
+					aquarium->setActive(false);
 					goToMenu();
 					soundSelect.play();
 				}
@@ -295,6 +301,7 @@ void PlayState::gotEvent(sf::Event event) {
 		if (event.key.code == sf::Keyboard::Escape) {
 			if (phase == playing || phase == shopping) {
 				shop.setActive(false);
+				aquarium->setActive(false);
 				goToMenu();
 			}
 			else if (DEBUG_DEMO_MODE && phase == loss) {
@@ -426,6 +433,9 @@ void PlayState::update(sf::Time elapsed) {
 
 	// Update shop
 	shop.update(elapsed);
+
+	// Update aquarium
+	aquarium->update(elapsed);
 
 	// Update grid
 	desiredY = getGame()->gameSize.y + 4;
@@ -712,6 +722,9 @@ void PlayState::render(sf::RenderWindow &window) {
 		text.setColor(cm::getDisabledTextColor());
 		window.draw(text);
 	}
+
+	// Render the aquarium
+	window.draw(*aquarium);
 
 	// Render jelly shop
 	window.draw(shop);
