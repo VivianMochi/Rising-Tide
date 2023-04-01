@@ -243,7 +243,7 @@ void Jelly::drawDebug(sf::RenderTarget &target, sf::RenderStates states) const {
 void Jelly::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	// This process involves creating multiple RenderTextures, each containing different jelly parts.
 	// The RenderTextures are quantized to integer locations, so we need to keep track of a floating
-	// offset vector to retain the smooth sub-pixel movement of the jelly components.
+	// offset vector2f to retain the smooth sub-pixel movement of the jelly components.
 
 	// Set up bounds
 	sf::IntRect bounds = getJellyBounds();
@@ -258,6 +258,15 @@ void Jelly::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	integerStates.transform.translate(getPosition() - overflow);
 	sf::RenderStates overflowStates;
 	overflowStates.transform.translate(sf::Vector2f(-bounds.left, -bounds.top) + overflow);
+
+	// Ensure jelly is on screen
+	sf::Vector2i renderBoxPositionOnScreen = sf::Vector2i(integerPosition.x + bounds.left, integerPosition.y + bounds.top);
+	if (renderBoxPositionOnScreen.x > 240 || renderBoxPositionOnScreen.x + bounds.width < 0) {
+		return;
+	}
+	if (renderBoxPositionOnScreen.y > 135 || renderBoxPositionOnScreen.y + bounds.height < 0) {
+		return;
+	}
 
 	// Set up color profiles
 	sf::Color jellyColor = cm::getJellyColor();
