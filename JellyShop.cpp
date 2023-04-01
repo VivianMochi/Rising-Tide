@@ -124,6 +124,7 @@ void JellyShop::update(sf::Time elapsed) {
 
 		aquarium->focusTopRight = !aquariumFocused;
 
+		// Todo: implement mouse panning
 		if (aquariumFocused) {
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
 				aquarium->cameraFocus = "";

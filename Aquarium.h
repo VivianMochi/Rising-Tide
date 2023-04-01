@@ -3,6 +3,7 @@
 #include "Entity.h"
 #include "Water.h"
 #include "Jelly.h"
+#include <memory>
 
 const int AQUARIUM_TOP_BUFFER = 20;
 const float AQUARIUM_MAX_FLOW = 10;
@@ -14,14 +15,16 @@ struct Particle {
 	float alpha = 0;
 };
 
-class Aquarium : public Entity {
+class Aquarium : public Entity, public std::enable_shared_from_this<Aquarium> {
 public:
 	virtual void init();
 	virtual void update(sf::Time elapsed);
 
 	void setActive(bool active);
 
-	sf::Vector2f getFlow(sf::Vector2f position, bool gridSpace = false) const;
+	sf::Vector2f getFlow(sf::Vector2f position) const;
+	sf::Vector2f getFlowAtGridSpace(sf::Vector2i gridSpace) const;
+	void addFlow(sf::Vector2f position, sf::Vector2f force);
 
 	std::string cameraFocus = "";
 	sf::Vector2f desiredCameraPosition;
@@ -30,6 +33,8 @@ public:
 
 private:
 	virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
+
+	bool debugView = false;
 
 	bool active = false;
 	float shadeAlpha = 0;

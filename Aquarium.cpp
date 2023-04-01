@@ -23,8 +23,17 @@ void Aquarium::init() {
 
 	// Add a test jelly
 	jellies["Test"] = std::make_shared<Jelly>();
-	jellies["Test"]->setPosition(150, 25);
+	jellies["Test"]->setState(state);
+	jellies["Test"]->aquarium = shared_from_this();
+	jellies["Test"]->init();
+	jellies["Test"]->setPosition(150, 150);
 	cameraFocus = "Test";
+
+	jellies["Test2"] = std::make_shared<Jelly>();
+	jellies["Test2"]->setState(state);
+	jellies["Test2"]->aquarium = shared_from_this();
+	jellies["Test2"]->init();
+	jellies["Test2"]->setPosition(50, 250);
 }
 
 void Aquarium::update(sf::Time elapsed) {
@@ -35,13 +44,21 @@ void Aquarium::update(sf::Time elapsed) {
 	water.update(elapsed);
 
 	// Debug randomize flow
+	if (DEBUG_ENABLED && sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
+		debugView = false;
+	}
 	if (DEBUG_ENABLED && sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
+		debugView = true;
 		for (int x = 0; x < flow.size(); x++) {
 			for (int y = 0; y < flow[x].size(); y++) {
 				flow[x][y].x = std::rand() % 21 - 10;
 				flow[x][y].y = std::rand() % 21 - 10;
 			}
 		}
+	}
+	// Debug add flow in corner
+	if (DEBUG_ENABLED && sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
+		addFlow(sf::Vector2f(50, 50), sf::Vector2f(0, -10));
 	}
 
 	// Update flow
@@ -53,10 +70,10 @@ void Aquarium::update(sf::Time elapsed) {
 	for (int x = 0; x < flow.size(); x++) {
 		for (int y = 0; y < flow[x].size(); y++) {
 			// This is a very basic design, all nodes trend towards zero
-			flowDesired[x][y] = (getFlow(sf::Vector2f(x - 1, y), true) +
-				getFlow(sf::Vector2f(x + 1, y), true) +
-				getFlow(sf::Vector2f(x, y - 1), true) +
-				getFlow(sf::Vector2f(x, y + 1), true)) / 4.0f;
+			flowDesired[x][y] = (getFlowAtGridSpace(sf::Vector2i(x - 1, y)) +
+				getFlowAtGridSpace(sf::Vector2i(x + 1, y)) +
+				getFlowAtGridSpace(sf::Vector2i(x, y - 1)) +
+				getFlowAtGridSpace(sf::Vector2i(x, y + 1))) / 4.0f;
 		}
 	}
 	// Apply flow step
@@ -99,7 +116,7 @@ void Aquarium::update(sf::Time elapsed) {
 
 	// Update jellies
 	for (auto &jelly : jellies) {
-		jelly.second->move(getFlow(jelly.second->getPosition()) * elapsed.asSeconds());
+		jelly.second->update(elapsed);
 	}
 
 	// Update camera
@@ -118,47 +135,68 @@ void Aquarium::setActive(bool active) {
 	this->active = active;
 }
 
-sf::Vector2f Aquarium::getFlow(sf::Vector2f position, bool gridSpace) const {
-	sf::Vector2f gridPosition = position;
-	if (!gridSpace) {
-		gridPosition = position / 10.0f - sf::Vector2f(0.5, 0.5);
-	}
+sf::Vector2f Aquarium::getFlow(sf::Vector2f position) const {
+	sf::Vector2f gridPosition = position / 10.0f - sf::Vector2f(0.5, 0.5);
 	sf::Vector2i closestPoint(std::round(gridPosition.x), std::round(gridPosition.y));
 	if (std::abs(gridPosition.x - closestPoint.x) < 0.1 && std::abs(gridPosition.y - closestPoint.y) < 0.1) {
-		if (closestPoint.x >= 0 && closestPoint.x < flow.size()) {
-			if (closestPoint.y >= 0 && closestPoint.y < flow[0].size()) {
-				return flow[closestPoint.x][closestPoint.y];
-			}
-		}
-		// Otherwise it isn't on the grid
-		sf::Vector2f result = sf::Vector2f(0, 0);
-		if (closestPoint.x < 0) {
-			result.x = AQUARIUM_MAX_FLOW;
-		}
-		else if (closestPoint.x >= flow.size()) {
-			result.x = -AQUARIUM_MAX_FLOW;
-		}
-		if (closestPoint.y < 0) {
-			result.y = AQUARIUM_MAX_FLOW;
-		}
-		else if (closestPoint.y >= flow[0].size()) {
-			result.y = -AQUARIUM_MAX_FLOW;
-		}
-		return result;
+		return getFlowAtGridSpace(closestPoint);
 	}
 	else {
 		// Get the weighted average force of all nearby points
 		// Grid cells are 1x1, so we can skip dividing subsquares by the total area
 		// Multiply a node's force by the area of the box across from it
-		sf::Vector2f topLeft(std::floor(gridPosition.x), std::floor(gridPosition.y));
-		sf::Vector2f offset = gridPosition - topLeft;
-		sf::Vector2f topLeftInfluence = ((1 - offset.x) * (1 - offset.y)) * getFlow(topLeft, true);
-		sf::Vector2f topRightInfluence = (offset.x * (1 - offset.y)) * getFlow(topLeft + sf::Vector2f(1, 0), true);
-		sf::Vector2f bottomLeftInfluence = ((1 - offset.x) * offset.y) * getFlow(topLeft + sf::Vector2f(0, 1), true);
-		sf::Vector2f bottomRightInfluence = (offset.x * offset.y) * getFlow(topLeft + sf::Vector2f(1, 1), true);
+		sf::Vector2i topLeft(std::floor(gridPosition.x), std::floor(gridPosition.y));
+		sf::Vector2f offset = gridPosition - sf::Vector2f(topLeft);
+		sf::Vector2f topLeftInfluence = ((1 - offset.x) * (1 - offset.y)) * getFlowAtGridSpace(topLeft);
+		sf::Vector2f topRightInfluence = (offset.x * (1 - offset.y)) * getFlowAtGridSpace(topLeft + sf::Vector2i(1, 0));
+		sf::Vector2f bottomLeftInfluence = ((1 - offset.x) * offset.y) * getFlowAtGridSpace(topLeft + sf::Vector2i(0, 1));
+		sf::Vector2f bottomRightInfluence = (offset.x * offset.y) * getFlowAtGridSpace(topLeft + sf::Vector2i(1, 1));
 		return topLeftInfluence + topRightInfluence + bottomLeftInfluence + bottomRightInfluence;
 	}
 	return sf::Vector2f(0, 0);
+}
+
+sf::Vector2f Aquarium::getFlowAtGridSpace(sf::Vector2i gridSpace) const {
+	if (gridSpace.x >= 0 && gridSpace.x < flow.size()) {
+		if (gridSpace.y >= 0 && gridSpace.y < flow[0].size()) {
+			return flow[gridSpace.x][gridSpace.y];
+		}
+	}
+	// Otherwise it isn't on the grid
+	sf::Vector2f result = sf::Vector2f(0, 0);
+	if (gridSpace.x < 0) {
+		result.x = AQUARIUM_MAX_FLOW;
+	}
+	else if (gridSpace.x >= flow.size()) {
+		result.x = -AQUARIUM_MAX_FLOW;
+	}
+	if (gridSpace.y < 0) {
+		result.y = AQUARIUM_MAX_FLOW;
+	}
+	else if (gridSpace.y >= flow[0].size()) {
+		result.y = -AQUARIUM_MAX_FLOW;
+	}
+	return result;
+}
+
+void Aquarium::addFlow(sf::Vector2f position, sf::Vector2f force) {
+	// Todo: influence nearby points rather than closest point
+	sf::Vector2f gridPosition = position / 10.0f - sf::Vector2f(0.5, 0.5);
+	sf::Vector2i closestPoint(std::round(gridPosition.x), std::round(gridPosition.y));
+	for (int dx = -1; dx <= 1; dx++) {
+		for (int dy = -1; dy <= 1; dy++) {
+			sf::Vector2i editedPoint = closestPoint + sf::Vector2i(dx, dy);
+			if (editedPoint.x >= 0 && editedPoint.x < flow.size()) {
+				if (editedPoint.y >= 0 && editedPoint.y < flow[0].size()) {
+					sf::Vector2f offset = gridPosition - sf::Vector2f(editedPoint);
+					float strength = std::pow(0.5, std::sqrt(offset.x * offset.x + offset.y * offset.y));
+					flow[editedPoint.x][editedPoint.y] += force * strength;
+				}
+			}
+		}
+	}
+	
+
 }
 
 void Aquarium::draw(sf::RenderTarget &target, sf::RenderStates states) const {
@@ -189,11 +227,16 @@ void Aquarium::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 
 	// Draw jellies
 	for (auto &jelly : jellies) {
-		target.draw(*jelly.second, states);
+		if (DEBUG_ENABLED && debugView) {
+			jelly.second->drawDebug(target, states);
+		}
+		else {
+			target.draw(*jelly.second, states);
+		}
 	}
 
 	// Debug draw flow
-	if (DEBUG_ENABLED && sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
+	if (DEBUG_ENABLED && debugView) {
 		particleSprite.setFillColor(cm::getJellyColor());
 		for (int x = 0; x < flow.size(); x++) {
 			for (int y = 0; y < flow[x].size(); y++) {
