@@ -23,37 +23,21 @@ void PlayState::init() {
 	initEntity(buttons);
 
 	// Build buttons
-	// This can definitely be cleaned up
-	buttonStart = std::make_shared<Button>("Start");
-	initEntity(*buttonStart);
-	buttons.addButton(buttonStart);
-	buttonShop = std::make_shared<Button>("Shop");
-	initEntity(*buttonShop);
-	buttons.addButton(buttonShop);
-	buttonExit = std::make_shared<Button>("Exit");
-	initEntity(*buttonExit);
-	if (!DEBUG_DEMO_MODE) {
-		buttons.addButton(buttonExit);
-	}
-	buttonSubmit = std::make_shared<Button>("Submit");
-	initEntity(*buttonSubmit);
-	buttons.addButton(buttonSubmit);
-	buttonShell = std::make_shared<Button>("Drain");
-	initEntity(*buttonShell);
-	buttons.addButton(buttonShell);
-	buttonMenu = std::make_shared<Button>("Menu");
-	initEntity(*buttonMenu);
-	buttons.addButton(buttonMenu);
+	buttonStart = createButton("Start");
+	buttonClassic = createButton("Classic");
+	buttonSpeedy = createButton("Speedy");
+	buttonShop = createButton("Shop");
+	buttonExit = createButton("Exit");
+	buttonSubmit = createButton("Submit");
+	buttonShell = createButton("Drain");
+	buttonMenu = createButton("Menu");
 
 	buttonPaletteLeft = std::make_shared<Button>("PaletteLeft", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(0, 0, 19, 10));
-	initEntity(*buttonPaletteLeft);
-	buttons.addButton(buttonPaletteLeft);
+	buttons.initButton(buttonPaletteLeft);
 	buttonPaletteLink = std::make_shared<Button>("PaletteLink", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(18, 0, 19, 10));
-	initEntity(*buttonPaletteLink);
-	buttons.addButton(buttonPaletteLink);
+	buttons.initButton(buttonPaletteLink);
 	buttonPaletteRight = std::make_shared<Button>("PaletteRight", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(36, 0, 19, 10));
-	initEntity(*buttonPaletteRight);
-	buttons.addButton(buttonPaletteRight);
+	buttons.initButton(buttonPaletteRight);
 
 	barMusic = std::make_shared<ButtonBar>("Music", 5);
 	initEntity(*barMusic);
@@ -137,11 +121,8 @@ void PlayState::gotEvent(sf::Event event) {
 
 			if (phase == menu) {
 				if (clickedButton == "Start") {
-					soundStart.play();
-					phase = playing;
-					if (DEBUG_DEMO_MODE || level == -1) {
-						loadLevel(0);
-					}
+					phase = setup;
+					soundSelect.play();
 				}
 				else if (clickedButton == "Shop") {
 					phase = shopping;
@@ -151,6 +132,20 @@ void PlayState::gotEvent(sf::Event event) {
 				}
 				else if (clickedButton == "Exit") {
 					getGame()->exit();
+				}
+			}
+			else if (phase == setup) {
+				if (clickedButton == "Classic") {
+					soundStart.play();
+					phase = playing;
+					mode = classic;
+					loadLevel(0);
+				}
+				if (clickedButton == "Speedy") {
+					soundStart.play();
+					phase = playing;
+					mode = speedy;
+					loadLevel(0);
 				}
 			}
 			else if (phase == playing) {
@@ -216,7 +211,9 @@ void PlayState::gotEvent(sf::Event event) {
 					if (found != "none") {
 						int lastWaterLevel = waterBar.waterLevel;
 
-						waterBar.increment();
+						if (mode == classic) {
+							waterBar.increment();
+						}
 
 						findItem(found);
 
@@ -299,7 +296,7 @@ void PlayState::gotEvent(sf::Event event) {
 	}
 	else if (event.type == sf::Event::KeyPressed) {
 		if (event.key.code == sf::Keyboard::Escape) {
-			if (phase == playing || phase == shopping) {
+			if (phase == playing || phase == shopping || phase == setup) {
 				shop.setActive(false);
 				aquarium->setActive(false);
 				goToMenu();
@@ -355,7 +352,11 @@ void PlayState::update(sf::Time elapsed) {
 
 	// Update timers
 	if (phase == playing && levelTimeTicking) {
+		float lastLevelTime = levelTime;
 		levelTime += elapsed.asSeconds();
+		if (mode == speedy && std::floor(levelTime) > lastLevelTime) {
+			waterBar.increment();
+		}
 	}
 	flashTime += elapsed.asSeconds();
 	if (flashTime >= 0.2) {
@@ -389,17 +390,28 @@ void PlayState::update(sf::Time elapsed) {
 
 	// Update camera position
 	float desiredY = 0;
-	if (phase == menu) {
+	if (phase == menu || phase == setup) {
 		desiredY = -25;
 	}
-	cameraY += (desiredY - cameraY) * elapsed.asSeconds() * 2;
+	approachNumber(cameraY, desiredY, elapsed.asSeconds() * 2);
 
 	// Update main menu pane
 	desiredY = -135;
 	if (phase == menu) {
 		desiredY = 0;
 	}
-	menuPaneY += (desiredY - menuPaneY) * elapsed.asSeconds() * 5;
+	approachNumber(menuPaneY, desiredY, elapsed.asSeconds() * 5);
+	desiredY = -135;
+	if (phase == menu) {
+		desiredY = 135;
+	}
+	else if (phase == setup) {
+		desiredY = 0;
+	}
+	if (std::abs(setupMenuPaneY - desiredY) >= 200) {
+		setupMenuPaneY = desiredY;
+	}
+	approachNumber(setupMenuPaneY, desiredY, elapsed.asSeconds() * 5);
 
 	// Do submission
 	if (phase == submitting) {
@@ -479,9 +491,11 @@ void PlayState::update(sf::Time elapsed) {
 
 	// Update buttons
 	bool buttonsActive = phase != submitting && phase != results && phase != loss;
-	buttonStart->setPosition(getGame()->gameSize.x / 2 - 55 / 2, menuPaneY + 87);
-	buttonShop->setPosition(getGame()->gameSize.x / 2 + 40, menuPaneY + 87);
-	buttonExit->setPosition(getGame()->gameSize.x / 2 - 55 / 2, menuPaneY + 105);
+	buttonStart->setPosition(93, menuPaneY + 81);
+	buttonClassic->setPosition(93, setupMenuPaneY + 81);
+	buttonSpeedy->setPosition(93, setupMenuPaneY + 97);
+	buttonShop->setPosition(93, menuPaneY + 97);
+	buttonExit->setPosition(93, menuPaneY + (DEBUG_DEMO_MODE ? 2000 : 113));
 	buttonSubmit->setPosition(leftPane.getPosition() + sf::Vector2f(2, 44));
 	buttonSubmit->enabled = phase != submitting;
 	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 119));
@@ -787,6 +801,16 @@ void PlayState::load() {
 		std::cout << "    No save data found";
 	}
 	saveFile.close();
+}
+
+std::shared_ptr<Button> PlayState::createButton(std::string buttonText) {
+	std::shared_ptr<Button> output = std::make_shared<Button>(buttonText);
+	buttons.initButton(output);
+	return output;
+}
+
+void PlayState::approachNumber(float &input, float desired, float factor) {
+	input += (desired - input) * factor;
 }
 
 void PlayState::adjustMusicVolume(sf::Music &music, float desiredVolume, float factor) {

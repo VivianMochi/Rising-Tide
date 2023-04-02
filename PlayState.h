@@ -56,6 +56,7 @@ public:
 
 	enum {
 		menu,
+		setup,
 		playing,
 		submitting,
 		results,
@@ -63,9 +64,17 @@ public:
 		shopping,
 	} phase = menu;
 
+	enum {
+		classic,
+		speedy,
+	} mode = classic;
+
 	std::map<std::string, int> saveData;
 
 private:
+	std::shared_ptr<Button> createButton(std::string buttonText);
+	void approachNumber(float &input, float desired, float factor);
+
 	void adjustMusicVolume(sf::Music &music, float desiredVolume, float factor);
 	void playDigSound();
 
@@ -78,6 +87,7 @@ private:
 
 	float cameraY = -25;
 	float menuPaneY = 0;
+	float setupMenuPaneY = 135;
 
 	float flashTime = 0;
 	float flagFlashTime = 0;
@@ -108,6 +118,8 @@ private:
 	ButtonManager buttons;
 
 	std::shared_ptr<Button> buttonStart;
+	std::shared_ptr<Button> buttonClassic;
+	std::shared_ptr<Button> buttonSpeedy;
 	std::shared_ptr<Button> buttonShop;
 	std::shared_ptr<Button> buttonExit;
 	std::shared_ptr<Button> buttonSubmit;
