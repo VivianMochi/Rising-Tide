@@ -107,7 +107,7 @@ void WaterBar::flood(int amount) {
 }
 
 void WaterBar::drain() {
-	waterLevel = 0;
+	resetSystem();
 	waterFlashTime = 1;
 	flashTime = 0;
 }

@@ -20,9 +20,9 @@ void PlayState::init() {
 		cm::selectPalette(saveData[selectedPalette], true);
 	}
 
+	// Build buttons
 	initEntity(buttons);
 
-	// Build buttons
 	buttonStart = createButton("Start");
 	buttonClassic = createButton("Classic");
 	buttonSpeedy = createButton("Speedy");
@@ -86,6 +86,7 @@ void PlayState::init() {
 	soundScore.setBuffer(rm::loadSoundBuffer("Resource/Sound/Score.wav"));
 	soundStart.setBuffer(rm::loadSoundBuffer("Resource/Sound/Start.wav"));
 	soundWater.setBuffer(rm::loadSoundBuffer("Resource/Sound/Water.wav"));
+	soundClick.setBuffer(rm::loadSoundBuffer("Resource/Sound/Click.wav"));
 
 	// Load music
 	std::string song = "Tide";
@@ -156,6 +157,7 @@ void PlayState::gotEvent(sf::Event event) {
 				else if (clickedButton == "Drain") {
 					if (shells > 0) {
 						if (waterBar.waterLevel > 0) {
+							waterBar.drain();
 							shells -= 1;
 							flashTime = 0;
 							shellFlashTime = 1;
@@ -165,7 +167,6 @@ void PlayState::gotEvent(sf::Event event) {
 						else {
 							soundError.play();
 						}
-						waterBar.drain();
 					}
 				}
 				else if (clickedButton == "Menu") {
@@ -211,14 +212,18 @@ void PlayState::gotEvent(sf::Event event) {
 					if (found != "none") {
 						int lastWaterLevel = waterBar.waterLevel;
 
-						if (mode == classic) {
+						// Digging on classic mode (except digging jellies) increments the water bar
+						if (mode == classic && found != "jelly") {
+							if (waterBar.activeBlocks <= 4) {
+								soundClick.play();
+							}
 							waterBar.increment();
 						}
 
 						findItem(found);
 
 						if (waterBar.waterLevel > lastWaterLevel) {
-							//soundWater.play();
+							soundWater.play();
 
 							if (waterBar.waterLevel >= 7) {
 								flashTime = 0;
@@ -355,7 +360,18 @@ void PlayState::update(sf::Time elapsed) {
 		float lastLevelTime = levelTime;
 		levelTime += elapsed.asSeconds();
 		if (mode == speedy && std::floor(levelTime) > lastLevelTime) {
+			int lastWaterLevel = waterBar.waterLevel;
+
 			waterBar.increment();
+
+			if (waterBar.waterLevel > lastWaterLevel) {
+				soundWater.play();
+
+				if (waterBar.waterLevel >= 7) {
+					flashTime = 0;
+					alertFlashTime = 1;
+				}
+			}
 		}
 	}
 	flashTime += elapsed.asSeconds();
@@ -579,6 +595,7 @@ void PlayState::update(sf::Time elapsed) {
 	soundScore.setVolume(100 * soundVolumeModifier);
 	soundStart.setVolume(100 * soundVolumeModifier);
 	soundWater.setVolume(100 * soundVolumeModifier);
+	soundClick.setVolume(100 * soundVolumeModifier);
 
 	// Update background position
 	title.setPosition(getGame()->gameSize.x / 2 - 80 / 2, menuPaneY + 32);
@@ -900,6 +917,7 @@ void PlayState::findItem(std::string item, bool flagged) {
 		}
 		else {
 			waterBar.flood(3);
+			//waterBar.resetSystem(true); // This resets the water block progress on a jelly dig
 			getGame()->screenShakeTime = 0.05;
 			soundJelly.play();
 		}

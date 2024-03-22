@@ -159,6 +159,7 @@ private:
 	sf::Sound soundScore;
 	sf::Sound soundStart;
 	sf::Sound soundWater;
+	sf::Sound soundClick;
 
 	sf::Music musicBase;
 	sf::Music musicActive;
