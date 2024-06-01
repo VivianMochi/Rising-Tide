@@ -42,6 +42,11 @@ const std::string unlockedPalettes = "unlocked";
 const std::string musicVolume = "music";
 const std::string soundVolume = "sound";
 
+struct ModeOptions {
+	bool digTime = true;
+	bool realTime = false;
+};
+
 class PlayState : public State {
 public:
 	virtual void init() override;
@@ -56,7 +61,6 @@ public:
 
 	enum {
 		menu,
-		setup,
 		playing,
 		submitting,
 		results,
@@ -64,10 +68,7 @@ public:
 		shopping,
 	} phase = menu;
 
-	enum {
-		classic,
-		speedy,
-	} mode = classic;
+	ModeOptions options;
 
 	std::map<std::string, int> saveData;
 
@@ -87,7 +88,6 @@ private:
 
 	float cameraY = -25;
 	float menuPaneY = 0;
-	float setupMenuPaneY = 135;
 
 	float flashTime = 0;
 	float flagFlashTime = 0;

@@ -46,9 +46,9 @@ void Grid::generateGrid(int jellyfish, int shells) {
 		}
 	}
 
-	// Place all jellies, leaning towards bottom of grid
+	// Place all jellies
 	for (int j = 0; j < jellyfish; j++) {
-		sf::Vector2i position = getEmptySquare(true);
+		sf::Vector2i position = getEmptySquare();
 		squares[position.x][position.y]->inside = "jelly";
 	}
 

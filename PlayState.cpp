@@ -122,8 +122,9 @@ void PlayState::gotEvent(sf::Event event) {
 
 			if (phase == menu) {
 				if (clickedButton == "Start") {
-					phase = setup;
-					soundSelect.play();
+					soundStart.play();
+					phase = playing;
+					loadLevel(0);
 				}
 				else if (clickedButton == "Shop") {
 					phase = shopping;
@@ -134,19 +135,13 @@ void PlayState::gotEvent(sf::Event event) {
 				else if (clickedButton == "Exit") {
 					getGame()->exit();
 				}
-			}
-			else if (phase == setup) {
-				if (clickedButton == "Classic") {
-					soundStart.play();
-					phase = playing;
-					mode = classic;
-					loadLevel(0);
+				else if (clickedButton == "Classic") {
+					options.digTime = true;
+					options.realTime = false;
 				}
-				if (clickedButton == "Speedy") {
-					soundStart.play();
-					phase = playing;
-					mode = speedy;
-					loadLevel(0);
+				else if (clickedButton == "Speedy") {
+					options.digTime = false;
+					options.realTime = true;
 				}
 			}
 			else if (phase == playing) {
@@ -213,7 +208,7 @@ void PlayState::gotEvent(sf::Event event) {
 						int lastWaterLevel = waterBar.waterLevel;
 
 						// Digging on classic mode (except digging jellies) increments the water bar
-						if (mode == classic && found != "jelly") {
+						if (options.digTime && found != "jelly") {
 							if (waterBar.activeBlocks <= 4) {
 								soundClick.play();
 							}
@@ -301,7 +296,7 @@ void PlayState::gotEvent(sf::Event event) {
 	}
 	else if (event.type == sf::Event::KeyPressed) {
 		if (event.key.code == sf::Keyboard::Escape) {
-			if (phase == playing || phase == shopping || phase == setup) {
+			if (phase == playing || phase == shopping) {
 				shop.setActive(false);
 				aquarium->setActive(false);
 				goToMenu();
@@ -359,7 +354,7 @@ void PlayState::update(sf::Time elapsed) {
 	if (phase == playing && levelTimeTicking) {
 		float lastLevelTime = levelTime;
 		levelTime += elapsed.asSeconds();
-		if (mode == speedy && std::floor(levelTime) > lastLevelTime) {
+		if (options.realTime && std::floor(levelTime) > lastLevelTime) {
 			int lastWaterLevel = waterBar.waterLevel;
 
 			waterBar.increment();
@@ -406,7 +401,7 @@ void PlayState::update(sf::Time elapsed) {
 
 	// Update camera position
 	float desiredY = 0;
-	if (phase == menu || phase == setup) {
+	if (phase == menu) {
 		desiredY = -25;
 	}
 	approachNumber(cameraY, desiredY, elapsed.asSeconds() * 2);
@@ -417,17 +412,6 @@ void PlayState::update(sf::Time elapsed) {
 		desiredY = 0;
 	}
 	approachNumber(menuPaneY, desiredY, elapsed.asSeconds() * 5);
-	desiredY = -135;
-	if (phase == menu) {
-		desiredY = 135;
-	}
-	else if (phase == setup) {
-		desiredY = 0;
-	}
-	if (std::abs(setupMenuPaneY - desiredY) >= 200) {
-		setupMenuPaneY = desiredY;
-	}
-	approachNumber(setupMenuPaneY, desiredY, elapsed.asSeconds() * 5);
 
 	// Do submission
 	if (phase == submitting) {
@@ -508,8 +492,8 @@ void PlayState::update(sf::Time elapsed) {
 	// Update buttons
 	bool buttonsActive = phase != submitting && phase != results && phase != loss;
 	buttonStart->setPosition(93, menuPaneY + 81);
-	buttonClassic->setPosition(93, setupMenuPaneY + 81);
-	buttonSpeedy->setPosition(93, setupMenuPaneY + 97);
+	buttonClassic->setPosition(20, menuPaneY + 81);
+	buttonSpeedy->setPosition(20, menuPaneY + 97);
 	buttonShop->setPosition(93, menuPaneY + 97);
 	buttonExit->setPosition(93, menuPaneY + (DEBUG_DEMO_MODE ? 2000 : 113));
 	buttonSubmit->setPosition(leftPane.getPosition() + sf::Vector2f(2, 44));
