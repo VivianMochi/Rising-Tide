@@ -215,7 +215,7 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 			numberSprite.setTextureRect(sf::IntRect(0, 8 + 8 * tab.number, 12, 8));
 			numberSprite.setPosition(tabSprite.getPosition());
 			if (tab.complete) {
-				numberSprite.setColor(cm::getDisabledTextColor());
+				numberSprite.setColor(cm::getUIColorMedium());
 			}
 			else {
 				numberSprite.setColor(cm::getFlashColor());

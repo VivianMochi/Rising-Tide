@@ -74,8 +74,7 @@ sf::Color cm::getWaterColor() {
 	return getPaletteColor(7);
 }
 
-// Todo: rename getUIColorDark
-sf::Color cm::getTextColor() {
+sf::Color cm::getUIColorDark() {
 	sf::Color output = getUIColor();
 	int strength = 23;
 	output.r *= strength / 100.0f;
@@ -84,8 +83,7 @@ sf::Color cm::getTextColor() {
 	return output;
 }
 
-// Todo: rename getUIColorMedium
-sf::Color cm::getDisabledTextColor() {
+sf::Color cm::getUIColorMedium() {
 	sf::Color output = getUIColor();
 	int strength = 57;
 	output.r *= strength / 100.0f;
@@ -94,20 +92,18 @@ sf::Color cm::getDisabledTextColor() {
 	return output;
 }
 
-// Todo: rename getUIColorBright
-sf::Color cm::getActiveUIElementColor() {
+sf::Color cm::getUIColorMediumDetail() {
 	sf::Color output = getUIColor();
-	int strength = 73;
+	int strength = 64;
 	output.r *= strength / 100.0f;
 	output.g *= strength / 100.0f;
 	output.b *= strength / 100.0f;
 	return output;
 }
 
-// Todo: should probably rename this too
-sf::Color cm::getDetailUIColor() {
+sf::Color cm::getUIColorBright() {
 	sf::Color output = getUIColor();
-	int strength = 64;
+	int strength = 73;
 	output.r *= strength / 100.0f;
 	output.g *= strength / 100.0f;
 	output.b *= strength / 100.0f;

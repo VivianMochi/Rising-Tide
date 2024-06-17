@@ -188,7 +188,7 @@ std::string JellyShop::clickPosition(sf::Vector2f position) {
 void JellyShop::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	BitmapText text;
 	text.setTexture(rm::loadTexture("Resource/Image/Font.png"));
-	text.setColor(cm::getTextColor());
+	text.setColor(cm::getUIColorDark());
 
 	target.draw(detailsPane);
 
@@ -208,7 +208,7 @@ void JellyShop::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	// Render scroll bar
 	float scrollPercent = scroll / scrollMax;
 	sf::RectangleShape scrollBar(sf::Vector2f(4, 20));
-	scrollBar.setFillColor(cm::getDisabledTextColor());
+	scrollBar.setFillColor(cm::getUIColorMedium());
 	scrollBar.setPosition(leftPane.getPosition() + sf::Vector2f(82, 16 + 2 + 77 * scrollPercent));
 	target.draw(scrollBar);
 
@@ -218,7 +218,7 @@ void JellyShop::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	PlayState *playState = dynamic_cast<PlayState*>(state);
 	if (playState) {
 		ra::renderJelly(target, states, leftPane.getPosition() + sf::Vector2f(3, 3));
-		text.setColor(cm::getTextColor());
+		text.setColor(cm::getUIColorDark());
 		text.setText(std::to_string(playState->saveData[totalJellies]));
 		text.setPosition(leftPane.getPosition() + sf::Vector2f(21, 4));
 		target.draw(text);
@@ -226,12 +226,12 @@ void JellyShop::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 
 	// Render selected text
 	if (selection != "") {
-		text.setColor(cm::getTextColor());
+		text.setColor(cm::getUIColorDark());
 		text.setText(shopData.at(selection).fullName);
 		text.setPosition(detailsPane.getPosition() + sf::Vector2f(3, 3));
 		target.draw(text);
 
-		text.setColor(cm::getDisabledTextColor());
+		text.setColor(cm::getUIColorMedium());
 		int offset = 15;
 		std::string temp = shopData.at(selection).description;
 		while (temp.find("\n") != -1) {

@@ -40,15 +40,15 @@ void ShopRow::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 
 	if (selected) {
 		sf::RectangleShape backdrop(sf::Vector2f(baseRect.width, baseRect.height));
-		backdrop.setFillColor(cm::getDisabledTextColor());
+		backdrop.setFillColor(cm::getUIColorMedium());
 		target.draw(backdrop, states);
 	}
 
 	BitmapText textSprite;
 	textSprite.setTexture(rm::loadTexture("Resource/Image/Font.png"));
-	textSprite.setColor(cm::getDisabledTextColor());
+	textSprite.setColor(cm::getUIColorMedium());
 	if (selected) {
-		textSprite.setColor(cm::getTextColor());
+		textSprite.setColor(cm::getUIColorDark());
 	}
 	textSprite.setText(displayText);
 	textSprite.setPosition(2, 1);

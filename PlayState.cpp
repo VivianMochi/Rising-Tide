@@ -625,12 +625,12 @@ void PlayState::render(sf::RenderWindow &window) {
 
 	BitmapText text;
 	text.setTexture(rm::loadTexture("Resource/Image/Font.png"));
-	text.setColor(cm::getTextColor());
+	text.setColor(cm::getUIColorDark());
 
 	// Render panes
 	window.draw(leftPane);
 	sf::Sprite leftDetails(rm::loadTexture("Resource/Image/JellyDetails.png"), sf::IntRect(0, 0, 60, 135));
-	leftDetails.setColor(cm::getDetailUIColor());
+	leftDetails.setColor(cm::getUIColorMediumDetail());
 	leftDetails.setPosition(leftPane.getPosition());
 	window.draw(leftDetails);
 	
@@ -643,7 +643,7 @@ void PlayState::render(sf::RenderWindow &window) {
 
 	window.draw(rightPane);
 	sf::Sprite rightDetails(rm::loadTexture("Resource/Image/JellyDetails.png"), sf::IntRect(60, 0, 60, 135));
-	rightDetails.setColor(cm::getDetailUIColor());
+	rightDetails.setColor(cm::getUIColorMediumDetail());
 	rightDetails.setPosition(rightPane.getPosition() + sf::Vector2f(11, 0));
 	window.draw(rightDetails);
 
@@ -662,7 +662,7 @@ void PlayState::render(sf::RenderWindow &window) {
 	text.setPosition(leftPane.getPosition() + sf::Vector2f(28 - text.getWidth() / 2, 34));
 	window.draw(text);
 	text.setText("/");
-	text.setColor(cm::getDisabledTextColor());
+	text.setColor(cm::getUIColorMedium());
 	text.setPosition(leftPane.getPosition() + sf::Vector2f(36, 34));
 	window.draw(text);
 	text.setText(std::to_string(levelJellyCount));
@@ -676,11 +676,11 @@ void PlayState::render(sf::RenderWindow &window) {
 		text.setColor(cm::getFlashColor());
 	}
 	else {
-		text.setColor(cm::getTextColor());
+		text.setColor(cm::getUIColorDark());
 	}
 	window.draw(text);
 	text.setText("/");
-	text.setColor(cm::getDisabledTextColor());
+	text.setColor(cm::getUIColorMedium());
 	text.setPosition(leftPane.getPosition() + sf::Vector2f(36, 51));
 	window.draw(text);
 	text.setText(std::to_string(levelFlagCount));
@@ -691,11 +691,11 @@ void PlayState::render(sf::RenderWindow &window) {
 	for (int shellMarkerIndex = 0; shellMarkerIndex < 3; shellMarkerIndex++) {
 		text.setText("*");
 		text.setPosition(leftPane.getPosition() + sf::Vector2f(23 + 8 * shellMarkerIndex, 66));
-		text.setColor(cm::getDisabledTextColor());
+		text.setColor(cm::getUIColorMedium());
 		if (shellsFound > shellMarkerIndex) {
 			text.setText("#");
 			text.move(-1, 0);
-			text.setColor(cm::getTextColor());
+			text.setColor(cm::getUIColorDark());
 			if (shellsFound == shellMarkerIndex + 1 && shellMarkerFlashTime > 0 && flashTime < 0.1) {
 				text.setColor(cm::getFlashColor());
 			}
@@ -724,7 +724,7 @@ void PlayState::render(sf::RenderWindow &window) {
 		text.monowidth = true;
 		text.setText(timeMinutes + ":");
 		text.setPosition(timerTextRight - sf::Vector2f(31 + text.getWidth(), 0));
-		text.setColor(cm::getTextColor());
+		text.setColor(cm::getUIColorDark());
 		window.draw(text);
 
 		text.setText(timeSeconds + ":");
@@ -744,7 +744,7 @@ void PlayState::render(sf::RenderWindow &window) {
 		text.setColor(cm::getFlashColor());
 	}
 	else {
-		text.setColor(score == 0 ? cm::getDisabledTextColor() : cm::getTextColor());
+		text.setColor(score == 0 ? cm::getUIColorMedium() : cm::getUIColorDark());
 	}
 	window.draw(text);
 
@@ -755,7 +755,7 @@ void PlayState::render(sf::RenderWindow &window) {
 		text.setColor(cm::getFlashColor());
 	}
 	else {
-		text.setColor(cm::getDisabledTextColor());
+		text.setColor(cm::getUIColorMedium());
 	}
 	window.draw(text);
 
@@ -766,21 +766,21 @@ void PlayState::render(sf::RenderWindow &window) {
 		text.setColor(cm::getFlashColor());
 	}
 	else {
-		text.setColor(shells == 0 ? cm::getDisabledTextColor() : cm::getTextColor());
+		text.setColor(shells == 0 ? cm::getUIColorMedium() : cm::getUIColorDark());
 	}
 	window.draw(text);
 
 	// Ability costs (work in progress)
 	text.setText("#1");
 	text.setPosition(rightPane.getPosition() + sf::Vector2f(22 - text.getWidth() / 2, 102));
-	text.setColor(cm::getActiveUIElementColor());
+	text.setColor(cm::getUIColorBright());
 	window.draw(text);
 
 	// Palette name
 	if (saveData[shopPaletteSelect]) {
 		text.setText(cm::getPaletteName(cm::getCurrentPalette()));
 		text.setPosition(paletteSelect.getPosition() + sf::Vector2f(27 - text.getWidth() / 2, 16));
-		text.setColor(cm::getTextColor());
+		text.setColor(cm::getUIColorDark());
 		window.draw(text);
 	}
 
@@ -792,9 +792,9 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(water);
 
 	// Render warning text
-	sf::Color warningColor = cm::getDetailUIColor();
+	sf::Color warningColor = cm::getUIColorMediumDetail();
 	if (phase == playing && waterBar.waterLevel >= 7 && waterBar.waterLevel <= 9) {
-		warningColor = cm::getTextColor();
+		warningColor = cm::getUIColorDark();
 		if (alertFlashTime > 0 && flashTime < 0.1) {
 			warningColor = cm::getFlashColor();
 		}
@@ -818,7 +818,7 @@ void PlayState::render(sf::RenderWindow &window) {
 		window.draw(text);
 	}
 	else if (phase == loss) {
-		warningColor = cm::getTextColor();
+		warningColor = cm::getUIColorDark();
 	}
 	// Render icons
 	ra::renderIcon(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(59, 20), sf::Vector2f(1, 3), warningColor);
@@ -828,7 +828,7 @@ void PlayState::render(sf::RenderWindow &window) {
 	if (phase == loss) {
 		text.setText("Game Over");
 		text.setPosition(getGame()->gameSize.x / 2 - text.getWidth() / 2, grid.getPosition().y - 10);
-		text.setColor(cm::getTextColor());
+		text.setColor(cm::getUIColorDark());
 		window.draw(text);
 	}
 

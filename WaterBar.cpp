@@ -123,7 +123,7 @@ void WaterBar::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 		blockSprite.setTextureRect(sf::IntRect(18 + block.thicknessIndex * 5, 91, 4, 9));
 		blockSprite.setPosition(block.position);
 		if (i >= maxBlocks) {
-			blockSprite.setColor(cm::getActiveUIElementColor());
+			blockSprite.setColor(cm::getUIColorBright());
 		}
 		else if (block.flashTime > 0 && flashTime < 0.1) {
 			blockSprite.setColor(cm::getFlashColor());
@@ -132,8 +132,7 @@ void WaterBar::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 			blockSprite.setColor(cm::getWaterColor());
 		}
 		else {
-			//blockSprite.setColor(cm::getActiveUIElementColor());
-			blockSprite.setColor(cm::getDisabledTextColor());
+			blockSprite.setColor(cm::getUIColorMedium());
 		}
 		target.draw(blockSprite, states);
 	}

@@ -60,10 +60,10 @@ void Button::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 		BitmapText textSprite;
 		textSprite.setTexture(rm::loadTexture("Resource/Image/Font.png"));
 		if (!enabled) {
-			textSprite.setColor(cm::getDisabledTextColor());
+			textSprite.setColor(cm::getUIColorMedium());
 		}
 		else {
-			textSprite.setColor(cm::getTextColor());
+			textSprite.setColor(cm::getUIColorDark());
 		}
 		textSprite.setText(text);
 		textSprite.setPosition(baseRect.width / 2 - textSprite.getWidth() / 2, (pressTime > 0 || !enabled ? 5 : 3));
