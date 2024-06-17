@@ -8,7 +8,7 @@
 Button::Button(std::string text) {
 	this->text = text;
 	buttonSprite.setTexture(rm::loadTexture("Resource/Image/Button.png"));
-	baseRect = sf::IntRect(0, 0, 55, 14);
+	baseRect = sf::IntRect(0, 0, 56, 16);
 }
 
 Button::Button(std::string text, sf::Texture &texture, sf::IntRect textureRect) {
@@ -53,6 +53,7 @@ std::string Button::clickPosition(sf::Vector2f position) {
 void Button::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	states.transform.translate(getPosition());
 
+	// Todo: add highlighting on hover, will need to add stuff to ButtonManager
 	target.draw(buttonSprite, states);
 
 	if (showText) {
@@ -65,7 +66,7 @@ void Button::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 			textSprite.setColor(cm::getTextColor());
 		}
 		textSprite.setText(text);
-		textSprite.setPosition(baseRect.width / 2 - textSprite.getWidth() / 2, (pressTime > 0 || !enabled ? 4 : 2));
+		textSprite.setPosition(baseRect.width / 2 - textSprite.getWidth() / 2, (pressTime > 0 || !enabled ? 5 : 3));
 		target.draw(textSprite, states);
 	}
 }

@@ -9,27 +9,26 @@ void WaterBar::init() {
 	tankWater.setPosition(3, 135);
 
 	verticalBarSprite.setTexture(rm::loadTexture("Resource/Image/WaterBar.png"));
-	verticalBarSprite.setTextureRect(sf::IntRect(0, 13, 6, 101));
-	verticalBarSprite.setPosition(3, 32);
+	verticalBarSprite.setTextureRect(sf::IntRect(0, 0, 6, 104));
+	verticalBarSprite.setPosition(3, 31);
 
 	verticalBarFrame.setTexture(rm::loadTexture("Resource/Image/WaterBar.png"));
-	verticalBarFrame.setTextureRect(sf::IntRect(6, 12, 6, 104));
+	verticalBarFrame.setTextureRect(sf::IntRect(7, 0, 6, 104));
 	verticalBarFrame.setPosition(3, 31);
-
-	horizontalBarSprite.setTexture(rm::loadTexture("Resource/Image/WaterBar.png"));
-	horizontalBarSprite.setTextureRect(sf::IntRect(0, 0, 62, 12));
-	horizontalBarSprite.setPosition(7, 121);
 
 	// Create blocks
 	for (int i = 0; i < 10; i++) {
 		blocks.emplace_back();
 		if (i == 0) {
-			blocks.back().thin = false;
-			blocks.back().position = sf::Vector2f(16 + i * 5, 123);
+			blocks.back().thicknessIndex = 2;
+		}
+		else if (i <= 2) {
+			blocks.back().thicknessIndex = 1;
 		}
 		else {
-			blocks.back().position = sf::Vector2f(19 + i * 5, 123);
+			blocks.back().thicknessIndex = 0;
 		}
+		blocks.back().position = sf::Vector2f(10, 32 + i * 10);
 	}
 }
 
@@ -63,7 +62,6 @@ void WaterBar::update(sf::Time elapsed) {
 	// Update colors
 	verticalBarSprite.setColor(cm::getUIColor());
 	verticalBarFrame.setColor(cm::getUIColor());
-	horizontalBarSprite.setColor(cm::getUIColor());
 }
 
 void WaterBar::resetSystem() {
@@ -119,20 +117,13 @@ void WaterBar::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	target.draw(tankWater, states);
 	target.draw(verticalBarFrame, states);
 
-	target.draw(horizontalBarSprite, states);
-
 	for (int i = 0; i < blocks.size(); i++) {
 		const WaterBlock &block = blocks[i];
 		sf::Sprite blockSprite(rm::loadTexture("Resource/Image/WaterBar.png"));
-		if (block.thin) {
-			blockSprite.setTextureRect(sf::IntRect(59, 12, 3, 8));
-		}
-		else {
-			blockSprite.setTextureRect(sf::IntRect(53, 12, 6, 8));
-		}
+		blockSprite.setTextureRect(sf::IntRect(18 + block.thicknessIndex * 5, 91, 4, 9));
 		blockSprite.setPosition(block.position);
 		if (i >= maxBlocks) {
-			blockSprite.setColor(cm::getTextColor());
+			blockSprite.setColor(cm::getActiveUIElementColor());
 		}
 		else if (block.flashTime > 0 && flashTime < 0.1) {
 			blockSprite.setColor(cm::getFlashColor());
@@ -141,7 +132,8 @@ void WaterBar::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 			blockSprite.setColor(cm::getWaterColor());
 		}
 		else {
-			blockSprite.setColor(cm::getActiveUIElementColor());
+			//blockSprite.setColor(cm::getActiveUIElementColor());
+			blockSprite.setColor(cm::getDisabledTextColor());
 		}
 		target.draw(blockSprite, states);
 	}

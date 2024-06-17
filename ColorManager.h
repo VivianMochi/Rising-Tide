@@ -30,6 +30,7 @@ namespace cm {
 	sf::Color getTextColor();
 	sf::Color getDisabledTextColor();
 	sf::Color getActiveUIElementColor();
+	sf::Color getDetailUIColor();
 	sf::Color getFlashColor();
 	sf::Color getShellColor();
 	sf::Color getWeedColor();

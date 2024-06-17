@@ -94,6 +94,7 @@ private:
 	float scoreFlashTime = 0;
 	float bestFlashTime = 0;
 	float shellFlashTime = 0;
+	float shellMarkerFlashTime = 0;
 	float alertFlashTime = 0;
 
 	float submitTime = 0;
@@ -102,7 +103,10 @@ private:
 	// Level stats
 	int level = -1;
 	int jellies = 0;
+	int levelJellyCount = 0;
 	int flags = 0;
+	int levelFlagCount = 0;
+	int shellsFound = 0;
 	std::string levelName = "";
 	float levelTime = 0;
 	bool levelTimeTicking = false;
@@ -112,7 +116,7 @@ private:
 	int shells = 0;
 
 	// Demo holdovers
-	bool showTimer = true;
+	bool showTimer = false;
 	bool showVolume = false;
 
 	ButtonManager buttons;
@@ -123,8 +127,10 @@ private:
 	std::shared_ptr<Button> buttonShop;
 	std::shared_ptr<Button> buttonExit;
 	std::shared_ptr<Button> buttonSubmit;
-	std::shared_ptr<Button> buttonShell;
+	std::shared_ptr<Button> buttonShellA;
+	std::shared_ptr<Button> buttonShellB;
 	std::shared_ptr<Button> buttonMenu;
+	std::shared_ptr<Button> buttonSettings;
 	std::shared_ptr<Button> buttonPaletteLeft;
 	std::shared_ptr<Button> buttonPaletteLink;
 	std::shared_ptr<Button> buttonPaletteRight;

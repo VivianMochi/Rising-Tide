@@ -6,7 +6,8 @@
 
 struct WaterBlock {
 	sf::Vector2f position;
-	bool thin = true;
+	// From 0 to 2, indicates what block sprite to use
+	int thicknessIndex = 0;
 
 	float flashTime = 0;
 };

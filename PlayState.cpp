@@ -29,8 +29,20 @@ void PlayState::init() {
 	buttonShop = createButton("Shop");
 	buttonExit = createButton("Exit");
 	buttonSubmit = createButton("Submit");
-	buttonShell = createButton("Drain");
-	buttonMenu = createButton("Menu");
+
+	buttonShellA = std::make_shared<Button>("Drain", rm::loadTexture("Resource/Image/SmallerButton.png"), sf::IntRect(0, 0, 38, 16));
+	buttonShellA->showText = true;
+	buttons.initButton(buttonShellA);
+
+	buttonShellB = std::make_shared<Button>("$", rm::loadTexture("Resource/Image/SmallerButton.png"), sf::IntRect(0, 0, 38, 16));
+	buttonShellB->showText = true;
+	buttons.initButton(buttonShellB);
+	
+	buttonMenu = std::make_shared<Button>("Menu", rm::loadTexture("Resource/Image/MenuButton.png"), sf::IntRect(0, 0, 41, 16));
+	buttons.initButton(buttonMenu);
+
+	buttonSettings = std::make_shared<Button>("Settings", rm::loadTexture("Resource/Image/SettingsButton.png"), sf::IntRect(0, 0, 13, 16));
+	buttons.initButton(buttonSettings);
 
 	buttonPaletteLeft = std::make_shared<Button>("PaletteLeft", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(0, 0, 19, 10));
 	buttons.initButton(buttonPaletteLeft);
@@ -165,6 +177,7 @@ void PlayState::gotEvent(sf::Event event) {
 					}
 				}
 				else if (clickedButton == "Menu") {
+					// Todo: This maintains score but will generate a new level, seems like holdover from demo code... needs a fix
 					goToMenu();
 					soundSelect.play();
 				}
@@ -209,7 +222,7 @@ void PlayState::gotEvent(sf::Event event) {
 
 						// Digging on classic mode (except digging jellies) increments the water bar
 						if (options.digTime && found != "jelly") {
-							if (waterBar.activeBlocks <= 4) {
+							if (waterBar.activeBlocks <= 3) {
 								soundClick.play();
 							}
 							waterBar.increment();
@@ -390,6 +403,10 @@ void PlayState::update(sf::Time elapsed) {
 	if (shellFlashTime < 0) {
 		shellFlashTime = 0;
 	}
+	shellMarkerFlashTime -= elapsed.asSeconds();
+	if (shellMarkerFlashTime < 0) {
+		shellMarkerFlashTime = 0;
+	}
 	flagFlashTime -= elapsed.asSeconds();
 	if (flagFlashTime < 0) {
 		flagFlashTime = 0;
@@ -496,12 +513,16 @@ void PlayState::update(sf::Time elapsed) {
 	buttonSpeedy->setPosition(20, menuPaneY + 97);
 	buttonShop->setPosition(93, menuPaneY + 97);
 	buttonExit->setPosition(93, menuPaneY + (DEBUG_DEMO_MODE ? 2000 : 113));
-	buttonSubmit->setPosition(leftPane.getPosition() + sf::Vector2f(2, 44));
+	buttonSubmit->setPosition(leftPane.getPosition() + sf::Vector2f(2, 88));
 	buttonSubmit->enabled = phase != submitting;
-	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 119));
+	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 117));
 	buttonMenu->enabled = buttonsActive;
-	buttonShell->setPosition(rightPane.getPosition() + sf::Vector2f(14, 44));
-	buttonShell->enabled = shells > 0 && buttonsActive;
+	buttonSettings->setPosition(leftPane.getPosition() + sf::Vector2f(45, 117));
+	buttonSettings->enabled = buttonsActive;
+	buttonShellA->setPosition(rightPane.getPosition() + sf::Vector2f(31, 99));
+	buttonShellA->enabled = shells > 0 && buttonsActive;
+	buttonShellB->setPosition(rightPane.getPosition() + sf::Vector2f(31, 117));
+	buttonShellB->enabled = false;
 	
 	float paletteSelectLeft = saveData[shopPaletteSelect] ? 2 : -1000;
 	bool atLeftEnd = cm::getCurrentPalette() == 0;
@@ -608,26 +629,49 @@ void PlayState::render(sf::RenderWindow &window) {
 
 	// Render panes
 	window.draw(leftPane);
+	sf::Sprite leftDetails(rm::loadTexture("Resource/Image/JellyDetails.png"), sf::IntRect(0, 0, 60, 135));
+	leftDetails.setColor(cm::getDetailUIColor());
+	leftDetails.setPosition(leftPane.getPosition());
+	window.draw(leftDetails);
+	
 	if (saveData[shopPaletteSelect]) {
-		window.draw(paletteSelect);
+		//window.draw(paletteSelect);
 	}
-	ra::renderJelly(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(3, 17));
-	ra::renderFlag(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(3, 31));
+	ra::renderJelly(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(3, 33));
+	ra::renderFlag(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(4, 50));
+	ra::renderShell(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(3, 65));
+
 	window.draw(rightPane);
-	ra::renderJelly(window, sf::RenderStates::Default, rightPane.getPosition() + sf::Vector2f(15, 17));
-	ra::renderShell(window, sf::RenderStates::Default, rightPane.getPosition() + sf::Vector2f(15, 31));
+	sf::Sprite rightDetails(rm::loadTexture("Resource/Image/JellyDetails.png"), sf::IntRect(60, 0, 60, 135));
+	rightDetails.setColor(cm::getDetailUIColor());
+	rightDetails.setPosition(rightPane.getPosition() + sf::Vector2f(11, 0));
+	window.draw(rightDetails);
 
 	// Render section title
 	text.setText(levelName);
-	text.setPosition(leftPane.getPosition() + sf::Vector2f(35 - text.getWidth() / 2, 4));
+	text.setPosition(leftPane.getPosition() + sf::Vector2f(35 - text.getWidth() / 2, 5));
 	window.draw(text);
 
-	// Jelly and flag counts
-	text.setText(std::to_string(jellies));
-	text.setPosition(leftPane.getPosition() + sf::Vector2f(20, 18));
+	// Render right title, unsure what to use it for yet
+	text.setText("stats");
+	text.setPosition(rightPane.getPosition() + sf::Vector2f(36 - text.getWidth() / 2, 5));
 	window.draw(text);
+
+	// Jelly count
+	text.setText(std::to_string(jellies));
+	text.setPosition(leftPane.getPosition() + sf::Vector2f(28 - text.getWidth() / 2, 34));
+	window.draw(text);
+	text.setText("/");
+	text.setColor(cm::getDisabledTextColor());
+	text.setPosition(leftPane.getPosition() + sf::Vector2f(36, 34));
+	window.draw(text);
+	text.setText(std::to_string(levelJellyCount));
+	text.setPosition(leftPane.getPosition() + sf::Vector2f(48 - text.getWidth() / 2, 34));
+	window.draw(text);
+
+	// Flag count
 	text.setText(std::to_string(flags));
-	text.setPosition(leftPane.getPosition() + sf::Vector2f(20, 32));
+	text.setPosition(leftPane.getPosition() + sf::Vector2f(28 - text.getWidth() / 2, 51));
 	if (flagFlashTime > 0 && flashTime < 0.1) {
 		text.setColor(cm::getFlashColor());
 	}
@@ -635,6 +679,29 @@ void PlayState::render(sf::RenderWindow &window) {
 		text.setColor(cm::getTextColor());
 	}
 	window.draw(text);
+	text.setText("/");
+	text.setColor(cm::getDisabledTextColor());
+	text.setPosition(leftPane.getPosition() + sf::Vector2f(36, 51));
+	window.draw(text);
+	text.setText(std::to_string(levelFlagCount));
+	text.setPosition(leftPane.getPosition() + sf::Vector2f(48 - text.getWidth() / 2, 51));
+	window.draw(text);
+
+	// Shell markers for this level
+	for (int shellMarkerIndex = 0; shellMarkerIndex < 3; shellMarkerIndex++) {
+		text.setText("*");
+		text.setPosition(leftPane.getPosition() + sf::Vector2f(23 + 8 * shellMarkerIndex, 66));
+		text.setColor(cm::getDisabledTextColor());
+		if (shellsFound > shellMarkerIndex) {
+			text.setText("#");
+			text.move(-1, 0);
+			text.setColor(cm::getTextColor());
+			if (shellsFound == shellMarkerIndex + 1 && shellMarkerFlashTime > 0 && flashTime < 0.1) {
+				text.setColor(cm::getFlashColor());
+			}
+		}
+		window.draw(text);
+	}
 
 	// Render level time
 	if (showTimer) {
@@ -670,35 +737,43 @@ void PlayState::render(sf::RenderWindow &window) {
 		text.monowidth = false;
 	}
 
-	// Score counts
-	text.setText(std::to_string(saveData[best]));
-	text.setPosition(rightPane.getPosition() + sf::Vector2f(40, 4));
-	if (bestFlashTime > 0 && flashTime < 0.1) {
-		text.setColor(cm::getFlashColor());
-	}
-	else {
-		text.setColor(cm::getTextColor());
-	}
-	window.draw(text);
-
-	text.setText(std::to_string(score));
-	text.setPosition(rightPane.getPosition() + sf::Vector2f(32, 18));
+	// Current run score
+	text.setText("$" + std::to_string(std::clamp(score, 0, 9999)));
+	text.setPosition(rightPane.getPosition() + sf::Vector2f(50 - text.getWidth() / 2, 43));
 	if (scoreFlashTime > 0 && flashTime < 0.1) {
 		text.setColor(cm::getFlashColor());
 	}
 	else {
-		text.setColor(cm::getTextColor());
+		text.setColor(score == 0 ? cm::getDisabledTextColor() : cm::getTextColor());
 	}
 	window.draw(text);
 
-	text.setText(std::to_string(shells));
-	text.setPosition(rightPane.getPosition() + sf::Vector2f(32, 32));
+	// Best score
+	text.setText("$" + std::to_string(std::clamp(saveData[best], 0, 9999)));
+	text.setPosition(rightPane.getPosition() + sf::Vector2f(50 - text.getWidth() / 2, 57));
+	if (bestFlashTime > 0 && flashTime < 0.1) {
+		text.setColor(cm::getFlashColor());
+	}
+	else {
+		text.setColor(cm::getDisabledTextColor());
+	}
+	window.draw(text);
+
+	// Shell count
+	text.setText("#" + std::to_string(std::clamp(shells, 0, 99)));
+	text.setPosition(rightPane.getPosition() + sf::Vector2f(29 - text.getWidth() / 2, 87));
 	if (shellFlashTime > 0 && flashTime < 0.1) {
 		text.setColor(cm::getFlashColor());
 	}
 	else {
-		text.setColor(cm::getTextColor());
+		text.setColor(shells == 0 ? cm::getDisabledTextColor() : cm::getTextColor());
 	}
+	window.draw(text);
+
+	// Ability costs (work in progress)
+	text.setText("#1");
+	text.setPosition(rightPane.getPosition() + sf::Vector2f(22 - text.getWidth() / 2, 102));
+	text.setColor(cm::getActiveUIElementColor());
 	window.draw(text);
 
 	// Palette name
@@ -716,25 +791,44 @@ void PlayState::render(sf::RenderWindow &window) {
 
 	window.draw(water);
 
-	// Render warning
+	// Render warning text
+	sf::Color warningColor = cm::getDetailUIColor();
 	if (phase == playing && waterBar.waterLevel >= 7 && waterBar.waterLevel <= 9) {
-		sf::Color dangerColor = cm::getDisabledTextColor();
+		warningColor = cm::getTextColor();
 		if (alertFlashTime > 0 && flashTime < 0.1) {
-			dangerColor = cm::getFlashColor();
+			warningColor = cm::getFlashColor();
 		}
 		text.setText("Danger");
+		if (waterBar.waterLevel == 8) {
+			text.setText("Danger!");
+		}
+		if (waterBar.waterLevel == 9) {
+			text.setText("Danger!!");
+			if (options.digTime) {
+				if (waterBar.activeBlocks == 1) {
+					text.setText("1 dig left!");
+				}
+				else {
+					text.setText(std::to_string(waterBar.activeBlocks) + " digs left!");
+				}
+			}
+		}
 		text.setPosition(getGame()->gameSize.x / 2 - text.getWidth() / 2, grid.getPosition().y - 10);
-		text.setColor(dangerColor);
+		text.setColor(warningColor);
 		window.draw(text);
-		ra::renderIcon(window, sf::RenderStates::Default, text.getPosition() + sf::Vector2f(-11, -1), sf::Vector2f(1, 3), dangerColor);
-		ra::renderIcon(window, sf::RenderStates::Default, text.getPosition() + sf::Vector2f(text.getWidth() + 1, -1), sf::Vector2f(1, 3), dangerColor);
 	}
+	else if (phase == loss) {
+		warningColor = cm::getTextColor();
+	}
+	// Render icons
+	ra::renderIcon(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(59, 20), sf::Vector2f(1, 3), warningColor);
+	ra::renderIcon(window, sf::RenderStates::Default, rightPane.getPosition() + sf::Vector2f(2, 20), sf::Vector2f(1, 3), warningColor);
 
 	// Render game over text
 	if (phase == loss) {
 		text.setText("Game Over");
 		text.setPosition(getGame()->gameSize.x / 2 - text.getWidth() / 2, grid.getPosition().y - 10);
-		text.setColor(cm::getDisabledTextColor());
+		text.setColor(cm::getTextColor());
 		window.draw(text);
 	}
 
@@ -877,8 +971,15 @@ void PlayState::loadLevel(int level) {
 	waterBar.setMaxBlocks(waterBlocks);
 	waterBar.resetSystem();
 
-	grid.generateGrid(jellies, 2 + std::rand() % 3);
+	// Todo: ensure the jelly count is correct! Generation can fail to place all jellies!
+	//grid.generateGrid(jellies, 2 + std::rand() % 3);
+	grid.generateGrid(jellies, 3);
 
+	levelJellyCount = jellies;
+	levelFlagCount = flags;
+
+	shellsFound = 0;
+	
 	// Reset time
 	levelTime = 0;
 	levelTimeTicking = false;
@@ -908,8 +1009,10 @@ void PlayState::findItem(std::string item, bool flagged) {
 	}
 	else if (item == "shell") {
 		shells += 1;
+		shellsFound += 1;
 		flashTime = 0;
 		shellFlashTime = 1;
+		shellMarkerFlashTime = 1;
 		soundShellFind.play();
 	}
 }
