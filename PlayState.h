@@ -10,6 +10,7 @@
 #include "ButtonBar.h"
 #include "JellyShop.h"
 #include "Aquarium.h"
+#include "SettingsTab.h"
 #include <SFML/Audio.hpp>
 #include <map>
 
@@ -67,6 +68,7 @@ public:
 		loss,
 		shopping,
 	} phase = menu;
+	bool settingsOpen = false;
 
 	ModeOptions options;
 
@@ -85,6 +87,8 @@ private:
 	void submit();
 
 	void goToMenu();
+	void toggleSettingsTab();
+	void adjustSetting(std::string setting, int newValue);
 
 	float cameraY = -25;
 	float menuPaneY = 0;
@@ -143,6 +147,8 @@ private:
 	JellyShop shop;
 
 	std::shared_ptr<Aquarium> aquarium;
+
+	SettingsTab settings;
 
 	sf::Sprite leftPane;
 	sf::Sprite rightPane;

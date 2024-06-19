@@ -12,6 +12,15 @@ void PlayState::init() {
 	// Try to load save
 	load();
 
+	// Ensure we set to fullscreen if needed
+	if (!saveData[settingWindowed]) {
+		adjustSetting(settingWindowed, 0);
+	}
+	// Also do the cursor
+	if (!saveData[settingCursor]) {
+		adjustSetting(settingCursor, 0);
+	}
+
 	// Load the saved palette, or select a random unlocked palette
 	if (saveData[selectedPalette] == -1) {
 		cm::selectPalette(std::rand() % saveData[unlockedPalettes], true);
@@ -73,6 +82,8 @@ void PlayState::init() {
 	shop.aquarium = aquarium;
 	initEntity(shop);
 
+	initEntity(settings);
+
 	// Load sprites
 	leftPane.setTexture(rm::loadTexture("Resource/Image/LeftPane.png"));
 	leftPane.setPosition(-71, 0);
@@ -132,7 +143,31 @@ void PlayState::gotEvent(sf::Event event) {
 			// Check buttons
 			std::string clickedButton = buttons.clickPosition(getGame()->getCursorPosition());
 
-			if (phase == menu) {
+			if (settingsOpen) {
+				// Settings pane takes priority over all
+				clickedButton = settings.clickPosition(getGame()->getCursorPosition());
+				if (clickedButton == "Settings") {
+					toggleSettingsTab();
+					soundSelect.play();
+				}
+				else if (clickedButton.substr(0, 8) == "setting-") {
+					// Adjusting a saveData entry directly
+					if (saveData[clickedButton] == 0) {
+						saveData[clickedButton] = 1;
+						save();
+					}
+					else {
+						saveData[clickedButton] = 0;
+						save();
+					}
+					adjustSetting(clickedButton, saveData[clickedButton]);
+					soundSelect.play();
+				}
+				else if (getGame()->getCursorPosition().y < 81) {
+					toggleSettingsTab();
+				}
+			}
+			else if (phase == menu) {
 				if (clickedButton == "Start") {
 					soundStart.play();
 					phase = playing;
@@ -154,6 +189,10 @@ void PlayState::gotEvent(sf::Event event) {
 				else if (clickedButton == "Speedy") {
 					options.digTime = false;
 					options.realTime = true;
+				}
+				else if (clickedButton == "Settings") {
+					toggleSettingsTab();
+					soundSelect.play();
 				}
 			}
 			else if (phase == playing) {
@@ -178,7 +217,12 @@ void PlayState::gotEvent(sf::Event event) {
 				}
 				else if (clickedButton == "Menu") {
 					// Todo: This maintains score but will generate a new level, seems like holdover from demo code... needs a fix
+					// Should probably keep as-is, to have a resume button on main menu
 					goToMenu();
+					soundSelect.play();
+				}
+				else if (clickedButton == "Settings") {
+					toggleSettingsTab();
 					soundSelect.play();
 				}
 				else if (clickedButton == "PaletteLeft") {
@@ -278,7 +322,10 @@ void PlayState::gotEvent(sf::Event event) {
 			}
 		}
 		else if (event.mouseButton.button == sf::Mouse::Right) {
-			if (phase == playing) {
+			if (settingsOpen) {
+				toggleSettingsTab();
+			}
+			else if (phase == playing) {
 				// Right click in game
 				int flagResult = grid.flagPosition(getGame()->getCursorPosition() - grid.getPosition(), flags == 0);
 				flags -= flagResult;
@@ -295,7 +342,10 @@ void PlayState::gotEvent(sf::Event event) {
 			}
 		}
 		else if (event.mouseButton.button == sf::Mouse::Middle) {
-			if (phase == playing) {
+			if (settingsOpen) {
+				toggleSettingsTab();
+			}
+			else if (phase == playing) {
 				// Middle click in game
 				bool markResult = grid.markPosition(getGame()->getCursorPosition() - grid.getPosition());
 				playDigSound();
@@ -309,7 +359,10 @@ void PlayState::gotEvent(sf::Event event) {
 	}
 	else if (event.type == sf::Event::KeyPressed) {
 		if (event.key.code == sf::Keyboard::Escape) {
-			if (phase == playing || phase == shopping) {
+			if (settingsOpen) {
+				toggleSettingsTab();
+			}
+			else if (phase == playing || phase == shopping) {
 				shop.setActive(false);
 				aquarium->setActive(false);
 				goToMenu();
@@ -466,6 +519,9 @@ void PlayState::update(sf::Time elapsed) {
 	// Update aquarium
 	aquarium->update(elapsed);
 
+	// Update settings
+	settings.update(elapsed);
+
 	// Update grid
 	desiredY = getGame()->gameSize.y + 4;
 	if (inGame) {
@@ -507,14 +563,14 @@ void PlayState::update(sf::Time elapsed) {
 	}
 
 	// Update buttons
-	bool buttonsActive = phase != submitting && phase != results && phase != loss;
+	bool buttonsActive = phase != submitting && phase != results && phase != loss && settingsOpen == false;
 	buttonStart->setPosition(93, menuPaneY + 81);
 	buttonClassic->setPosition(20, menuPaneY + 81);
 	buttonSpeedy->setPosition(20, menuPaneY + 97);
 	buttonShop->setPosition(93, menuPaneY + 97);
 	buttonExit->setPosition(93, menuPaneY + (DEBUG_DEMO_MODE ? 2000 : 113));
 	buttonSubmit->setPosition(leftPane.getPosition() + sf::Vector2f(2, 88));
-	buttonSubmit->enabled = phase != submitting;
+	buttonSubmit->enabled = phase != submitting && settingsOpen == false;
 	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 117));
 	buttonMenu->enabled = buttonsActive;
 	buttonSettings->setPosition(leftPane.getPosition() + sf::Vector2f(45, 117));
@@ -837,6 +893,9 @@ void PlayState::render(sf::RenderWindow &window) {
 
 	// Render jelly shop
 	window.draw(shop);
+
+	// Render settings tab
+	window.draw(settings);
 }
 
 void PlayState::initEntity(Entity &entity) {
@@ -863,6 +922,10 @@ void PlayState::load() {
 	saveData[unlockedPalettes] = 1;
 	saveData[musicVolume] = 2;
 	saveData[soundVolume] = 2;
+	// Initial settings
+	saveData[settingWindowed] = 1;
+	saveData[settingCursor] = 1;
+	saveData[settingShake] = 1;
 
 	std::ifstream saveFile("Save.txt");
 	if (saveFile.is_open()) {
@@ -1003,7 +1066,9 @@ void PlayState::findItem(std::string item, bool flagged) {
 		else {
 			waterBar.flood(3);
 			//waterBar.resetSystem(true); // This resets the water block progress on a jelly dig
-			getGame()->screenShakeTime = 0.05;
+			if (saveData[settingShake]) {
+				getGame()->screenShakeTime = 0.05;
+			}
 			soundJelly.play();
 		}
 	}
@@ -1032,6 +1097,27 @@ void PlayState::goToMenu() {
 
 		saveData[selectedPalette] = -1;
 		cm::selectPalette(0);
+	}
+}
+
+void PlayState::toggleSettingsTab() {
+	settingsOpen = !settingsOpen;
+	settings.open = settingsOpen;
+}
+
+void PlayState::adjustSetting(std::string setting, int newValue) {
+	if (setting == settingWindowed) {
+		getGame()->setFullscreen(!newValue);
+	}
+	else if (setting == settingCursor) {
+		// Toggle software cursor
+		getGame()->customCursor = newValue;
+		getGame()->getWindow()->setMouseCursorVisible(!newValue);
+	}
+	else if (setting == settingShake) {
+		if (newValue) {
+			getGame()->screenShakeTime = 0.05;
+		}
 	}
 }
 

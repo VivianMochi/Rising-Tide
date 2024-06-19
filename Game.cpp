@@ -73,7 +73,8 @@ Game::Game() {
 			}
 			else if (event.type == sf::Event::KeyPressed) {
 				if (event.key.code == sf::Keyboard::F11) {
-					setFullscreen(!fullscreen);
+					// This is now controlled through settings
+					//setFullscreen(!fullscreen);
 				}
 			}
 
@@ -114,7 +115,9 @@ Game::Game() {
 			state->render(*window);
 		}
 		// Draw the cursor
-		window->draw(cursorSprite);
+		if (customCursor) {
+			window->draw(cursorSprite);
+		}
 
 		// Pixelate
 		sf::Texture postTexture;
@@ -178,13 +181,15 @@ sf::Vector2f Game::getCursorPosition() {
 }
 
 void Game::setFullscreen(bool fullscreen) {
+	// Todo: need to do this by adjusting the view, not by recreating the window.
+	// Also try to do borderless instead of fullscreen
 	this->fullscreen = fullscreen;
 	if (window) {
 		delete window;
 	}
 	if (fullscreen) {
-		window = new sf::RenderWindow(sf::VideoMode(1920, 1080), gameName, sf::Style::Fullscreen);
-		//window = new sf::RenderWindow(sf::VideoMode(2560, 1440), gameName, sf::Style::Fullscreen);
+		//window = new sf::RenderWindow(sf::VideoMode(1920, 1080), gameName, sf::Style::Fullscreen);
+		window = new sf::RenderWindow(sf::VideoMode(2560, 1440), gameName, sf::Style::Fullscreen);
 	}
 	else {
 		window = new sf::RenderWindow(sf::VideoMode(gameSize.x * defaultScale, gameSize.y * defaultScale), gameName);
@@ -194,7 +199,9 @@ void Game::setFullscreen(bool fullscreen) {
 	scale = std::min(window->getSize().x / gameSize.x, window->getSize().y / gameSize.y);
 
 	// Hide the OS cursor
-	window->setMouseCursorVisible(false);
+	if (customCursor) {
+		window->setMouseCursorVisible(false);
+	}
 }
 
 void Game::playGlobalSound(std::string filename) {

@@ -34,7 +34,7 @@ public:
 	sf::Vector2f getCursorPosition();
 
 	// Sprite for the cursor
-	// Todo: this should be optional
+	bool customCursor = true;
 	sf::Sprite cursorSprite;
 
 	// Game variables
