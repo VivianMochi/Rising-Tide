@@ -133,16 +133,24 @@ std::string Grid::digPosition(sf::Vector2f position) {
 	return "none";
 }
 
-int Grid::flagPosition(sf::Vector2f position, bool onlyRemove) {
+int Grid::flagPosition(sf::Vector2f position, ActionRule rule) {
 	for (int x = 0; x < GRID_WIDTH; x++) {
 		for (int y = 0; y < GRID_HEIGHT; y++) {
 			if (squares[x][y]) {
 				if (sf::FloatRect(squares[x][y]->position, sf::Vector2f(10, 10)).contains(position) && !squares[x][y]->dug) {
-					if (onlyRemove) {
+					if (rule == onlyRemove) {
 						if (squares[x][y]->flagged) {
 							squares[x][y]->flagged = false;
 							checkTabCompletion();
 							return -1;
+						}
+					}
+					else if (rule == onlyAdd) {
+						if (!squares[x][y]->flagged) {
+							squares[x][y]->flagged = true;
+							squares[x][y]->marked = false;
+							checkTabCompletion();
+							return 1;
 						}
 					}
 					else {
@@ -163,17 +171,37 @@ int Grid::flagPosition(sf::Vector2f position, bool onlyRemove) {
 	return 0;
 }
 
-bool Grid::markPosition(sf::Vector2f position) {
+int Grid::markPosition(sf::Vector2f position, ActionRule rule) {
 	for (int x = 0; x < GRID_WIDTH; x++) {
 		for (int y = 0; y < GRID_HEIGHT; y++) {
 			if (squares[x][y]) {
 				if (sf::FloatRect(squares[x][y]->position, sf::Vector2f(10, 10)).contains(position) && !squares[x][y]->dug && !squares[x][y]->flagged) {
-					squares[x][y]->marked = !squares[x][y]->marked;
-					return squares[x][y]->marked;
+					if (rule == onlyRemove) {
+						if (squares[x][y]->marked) {
+							squares[x][y]->marked = false;
+							return -1;
+						}
+					}
+					else if (rule == onlyAdd) {
+						if (!squares[x][y]->marked) {
+							squares[x][y]->marked = true;
+							return 1;
+						}
+					}
+					else {
+						squares[x][y]->marked = !squares[x][y]->marked;
+						if (squares[x][y]->marked) {
+							return 1;
+						}
+						else {
+							return -1;
+						}
+					}
 				}
 			}
 		}
 	}
+	return 0;
 }
 
 std::string Grid::popSquare(bool flagged) {

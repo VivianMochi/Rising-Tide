@@ -139,6 +139,9 @@ void PlayState::init() {
 
 void PlayState::gotEvent(sf::Event event) {
 	if (event.type == sf::Event::MouseButtonPressed) {
+		// Any mouse press cancels the ongoing action
+		heldAction = noAction;
+
 		if (event.mouseButton.button == sf::Mouse::Left) {
 			// Check buttons
 			std::string clickedButton = buttons.clickPosition(getGame()->getCursorPosition());
@@ -260,32 +263,11 @@ void PlayState::gotEvent(sf::Event event) {
 				}
 				else {
 					// Left click on board
-					std::string found = grid.digPosition(getGame()->getCursorPosition() - grid.getPosition());
-					if (found != "none") {
-						int lastWaterLevel = waterBar.waterLevel;
-
-						// Digging on classic mode (except digging jellies) increments the water bar
-						if (options.digTime && found != "jelly") {
-							if (waterBar.activeBlocks <= 3) {
-								soundClick.play();
-							}
-							waterBar.increment();
-						}
-
-						findItem(found);
-
-						if (waterBar.waterLevel > lastWaterLevel) {
-							soundWater.play();
-
-							if (waterBar.waterLevel >= 7) {
-								flashTime = 0;
-								alertFlashTime = 1;
-							}
-						}
-
-						playDigSound();
-
-						levelTimeTicking = true;
+					doDigLogic();
+					if (heldAction == noAction) {
+						heldAction = digAction;
+						actionStartGridSquare = getGridSquareFromCursorPosition();
+						actionLastGridSquare = actionStartGridSquare;
 					}
 				}
 			}
@@ -327,17 +309,12 @@ void PlayState::gotEvent(sf::Event event) {
 			}
 			else if (phase == playing) {
 				// Right click in game
-				int flagResult = grid.flagPosition(getGame()->getCursorPosition() - grid.getPosition(), flags == 0);
-				flags -= flagResult;
-				if (flagResult != 0) {
-					if (flagResult > 0) {
-						soundFlag.play();
-					}
-					else {
-						soundUnflag.play();
-					}
-					flashTime = 0;
-					flagFlashTime = 0.5;
+				bool flagResult = doFlagLogic();
+				if (heldAction == noAction) {
+					heldAction = flagAction;
+					actionStartGridSquare = getGridSquareFromCursorPosition();
+					actionLastGridSquare = actionStartGridSquare;
+					heldActionIsRemoval = !flagResult;
 				}
 			}
 		}
@@ -347,9 +324,26 @@ void PlayState::gotEvent(sf::Event event) {
 			}
 			else if (phase == playing) {
 				// Middle click in game
-				bool markResult = grid.markPosition(getGame()->getCursorPosition() - grid.getPosition());
-				playDigSound();
+				bool markResult = doMarkLogic();
+				if (heldAction == noAction) {
+					heldAction = markAction;
+					actionStartGridSquare = getGridSquareFromCursorPosition();
+					actionLastGridSquare = actionStartGridSquare;
+					heldActionIsRemoval = !markResult;
+				}
 			}
+		}
+	}
+	else if (event.type == sf::Event::MouseButtonReleased) {
+		// Ensure any held actions are cleared
+		if (event.mouseButton.button == sf::Mouse::Left && heldAction == digAction) {
+			heldAction = noAction;
+		}
+		else if (event.mouseButton.button == sf::Mouse::Right && heldAction == flagAction) {
+			heldAction = noAction;
+		}
+		else if (event.mouseButton.button == sf::Mouse::Middle && heldAction == markAction) {
+			heldAction = noAction;
 		}
 	}
 	else if (event.type == sf::Event::MouseWheelMoved) {
@@ -415,6 +409,23 @@ void PlayState::gotEvent(sf::Event event) {
 void PlayState::update(sf::Time elapsed) {
 	// Update palette
 	cm::updatePalette(elapsed);
+
+	// Do active held actions
+	if (phase == playing && heldAction != noAction) {
+		sf::Vector2i thisGridSquare = getGridSquareFromCursorPosition();
+		if (thisGridSquare != actionLastGridSquare) {
+			if (heldAction == digAction) {
+				doDigLogic();
+			}
+			else if (heldAction == flagAction) {
+				doFlagLogic(false);
+			}
+			else if (heldAction == markAction) {
+				doMarkLogic(false);
+			}
+			actionLastGridSquare = thisGridSquare;
+		}
+	}
 
 	// Update timers
 	if (phase == playing && levelTimeTicking) {
@@ -971,6 +982,13 @@ void PlayState::approachNumber(float &input, float desired, float factor) {
 	input += (desired - input) * factor;
 }
 
+sf::Vector2i PlayState::getGridSquareFromCursorPosition() {
+	sf::Vector2i output;
+	output.x = std::floor((getGame()->getCursorPosition().x - grid.getPosition().x) / 10.0f);
+	output.y = std::floor((getGame()->getCursorPosition().y - grid.getPosition().y) / 10.0f);
+	return output;
+}
+
 void PlayState::adjustMusicVolume(sf::Music &music, float desiredVolume, float factor) {
 	float volume = music.getVolume();
 	volume += (desiredVolume - volume) * factor;
@@ -1119,5 +1137,89 @@ void PlayState::adjustSetting(std::string setting, int newValue) {
 			getGame()->screenShakeTime = 0.05;
 		}
 	}
+}
+
+void PlayState::doDigLogic() {
+	std::string found = grid.digPosition(getGame()->getCursorPosition() - grid.getPosition());
+	if (found != "none") {
+		int lastWaterLevel = waterBar.waterLevel;
+
+		// Digging on classic mode (except digging jellies) increments the water bar
+		if (options.digTime && found != "jelly") {
+			if (waterBar.activeBlocks <= 3) {
+				soundClick.play();
+			}
+			waterBar.increment();
+		}
+
+		findItem(found);
+
+		if (waterBar.waterLevel > lastWaterLevel) {
+			soundWater.play();
+
+			if (waterBar.waterLevel >= 7) {
+				flashTime = 0;
+				alertFlashTime = 1;
+			}
+		}
+
+		playDigSound();
+
+		levelTimeTicking = true;
+	}
+}
+
+bool PlayState::doFlagLogic(bool toggle) {
+	// Determine rules
+	ActionRule rule = toggleState;
+	if (!toggle) {
+		rule = heldActionIsRemoval ? onlyRemove : onlyAdd;
+	}
+	if (flags == 0) {
+		// If set to onlyAdd but have no remaining flags, cancel logic
+		if (rule == onlyAdd) {
+			return false;
+		}
+		// Otherwise just set rule to onlyRemove
+		rule = onlyRemove;
+	}
+
+	// Do action
+	int flagResult = grid.flagPosition(getGame()->getCursorPosition() - grid.getPosition(), rule);
+	flags -= flagResult;
+	
+	// Sounds and effects
+	if (flagResult != 0) {
+		if (flagResult > 0) {
+			soundFlag.play();
+		}
+		else {
+			soundUnflag.play();
+		}
+		flashTime = 0;
+		flagFlashTime = 0.5;
+	}
+
+	// Result
+	return flagResult != -1;
+}
+
+bool PlayState::doMarkLogic(bool toggle) {
+	// Determine rules
+	ActionRule rule = toggleState;
+	if (!toggle) {
+		rule = heldActionIsRemoval ? onlyRemove : onlyAdd;
+	}
+
+	// Do action
+	int markResult = grid.markPosition(getGame()->getCursorPosition() - grid.getPosition(), rule);
+
+	// Sounds and effects
+	if (markResult != 0) {
+		playDigSound();
+	}
+
+	// Result
+	return markResult != -1;
 }
 

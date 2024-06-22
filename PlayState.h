@@ -77,6 +77,7 @@ public:
 private:
 	std::shared_ptr<Button> createButton(std::string buttonText);
 	void approachNumber(float &input, float desired, float factor);
+	sf::Vector2i getGridSquareFromCursorPosition();
 
 	void adjustMusicVolume(sf::Music &music, float desiredVolume, float factor);
 	void playDigSound();
@@ -89,6 +90,18 @@ private:
 	void goToMenu();
 	void toggleSettingsTab();
 	void adjustSetting(std::string setting, int newValue);
+
+	// Action logic
+	// Attempts to dig the square under the cursor
+	void doDigLogic();
+	// Attempts to flag the square under the cursor
+	// If toggle is false, will use heldActionIsRemoval to determine which rule to use
+	// Returns false if a removal happened
+	bool doFlagLogic(bool toggle = true);
+	// Attempts to mark the square under the cursor
+	// If toggle is false, will use heldActionIsRemoval to determine which rule to use
+	// Returns false if a removal happened
+	bool doMarkLogic(bool toggle = true);
 
 	float cameraY = -25;
 	float menuPaneY = 0;
@@ -103,6 +116,11 @@ private:
 
 	float submitTime = 0;
 	bool poppingFlags = false;
+
+	ActionType heldAction = noAction;
+	bool heldActionIsRemoval = false;
+	sf::Vector2i actionStartGridSquare;
+	sf::Vector2i actionLastGridSquare;
 
 	// Level stats
 	int level = -1;

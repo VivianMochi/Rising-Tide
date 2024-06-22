@@ -41,6 +41,19 @@ struct Tab {
 	float offsetX = 0;
 };
 
+enum ActionType {
+	noAction,
+	digAction,
+	flagAction,
+	markAction,
+};
+
+enum ActionRule {
+	toggleState,
+	onlyAdd,
+	onlyRemove,
+};
+
 class Grid : public Entity {
 public:
 	virtual void init() override;
@@ -54,13 +67,14 @@ public:
 	std::string digPosition(sf::Vector2f position);
 
 	// Flag at the position relative to the grid
-	// onlyRemove will only allow the removal of existing flags, not place new ones
+	// The rule can be used to limit to only adding or removing flags
 	// Returns 1 if a flag was placed, -1 if a flag was removed, or 0 if nothing happened
-	int flagPosition(sf::Vector2f position, bool onlyRemove);
+	int flagPosition(sf::Vector2f position, ActionRule rule = toggleState);
 
 	// Draw an X in the sand at the position relative to the grid
-	// Returns true if an X was placed
-	bool markPosition(sf::Vector2f position);
+	// The rule can be used to limit to only adding or removing marks
+	// Returns 1 if a mark was placed, -1 if a mark was removed, or 0 if nothing happened
+	int markPosition(sf::Vector2f position, ActionRule rule = toggleState);
 
 	// Pop open the top left unpopped grid square and return what was inside
 	// Flagged determines whether this only opens flagged squares or unflagged squares
