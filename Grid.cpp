@@ -99,13 +99,15 @@ void Grid::generateGrid(int jellyfish, int shells) {
 		}
 	}
 
-	// Add tabs
+	// Add tabs and validate jelly count
+	totalJellies = 0;
 	for (int y = 0; y < GRID_HEIGHT; y++) {
 		int jelliesInRow = 0;
 		for (int x = 0; x < GRID_WIDTH; x++) {
 			if (squares[x][y]) {
 				if (squares[x][y]->inside == "jelly") {
 					jelliesInRow += 1;
+					totalJellies += 1;
 				}
 			}
 		}
@@ -116,6 +118,7 @@ void Grid::generateGrid(int jellyfish, int shells) {
 			tabs.back().offsetX = y * 20;
 		}
 	}
+	hiddenJellies = totalJellies;
 }
 
 std::string Grid::digPosition(sf::Vector2f position) {
@@ -179,17 +182,20 @@ int Grid::markPosition(sf::Vector2f position, ActionRule rule) {
 					if (rule == onlyRemove) {
 						if (squares[x][y]->marked) {
 							squares[x][y]->marked = false;
+							checkTabCompletion();
 							return -1;
 						}
 					}
 					else if (rule == onlyAdd) {
 						if (!squares[x][y]->marked) {
 							squares[x][y]->marked = true;
+							checkTabCompletion();
 							return 1;
 						}
 					}
 					else {
 						squares[x][y]->marked = !squares[x][y]->marked;
+						checkTabCompletion();
 						if (squares[x][y]->marked) {
 							return 1;
 						}
@@ -310,20 +316,41 @@ void Grid::surroundWithSeaweed(sf::Vector2i position, bool onlySome) {
 }
 
 void Grid::checkTabCompletion() {
+	hiddenJellies = totalJellies;
 	for (Tab &tab : tabs) {
 		tab.complete = true;
 		int jelliesFound = 0;
+		int flagsInRow = 0;
 		for (int x = 0; x < GRID_WIDTH; x++) {
-			if (squares[x][tab.row] && !squares[x][tab.row]->dug && !squares[x][tab.row]->flagged) {
-				tab.complete = false;
-			}
-			if (squares[x][tab.row] && squares[x][tab.row]->dug && squares[x][tab.row]->inside == "jelly") {
-				jelliesFound += 1;
+			if (squares[x][tab.row]) {
+				if (!squares[x][tab.row]->dug && !squares[x][tab.row]->flagged && !squares[x][tab.row]->marked) {
+					// If any cell is untouched in the row, we say the row is incomplete by default
+					tab.complete = false;
+				}
+				if (squares[x][tab.row]->flagged) {
+					flagsInRow += 1;
+				}
+				if (squares[x][tab.row]->dug && squares[x][tab.row]->inside == "jelly") {
+					jelliesFound += 1;
+				}
 			}
 		}
+		if (flagsInRow + jelliesFound < tab.number) {
+			// If flags + found jellies in the row is less than the number of known jellies, the row isn't done yet
+			tab.complete = false;
+		}
 		if (jelliesFound >= tab.number) {
-			// All jellies were revealed, so the row is done
+			// Conversely, if all jellies in the row are revealed, the row is done
 			tab.complete = true;
+		}
+
+		// Adjust hidden jelly count based on tab state
+		if (tab.complete) {
+			hiddenJellies -= tab.number;
+		}
+		else {
+			// Otherwise account for jellies found
+			hiddenJellies -= jelliesFound;
 		}
 	}
 }

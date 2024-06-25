@@ -725,14 +725,14 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(text);
 
 	// Jelly count
-	text.setText(std::to_string(jellies));
+	text.setText(std::to_string(grid.hiddenJellies));
 	text.setPosition(leftPane.getPosition() + sf::Vector2f(28 - text.getWidth() / 2, 34));
 	window.draw(text);
 	text.setText("/");
 	text.setColor(cm::getUIColorMedium());
 	text.setPosition(leftPane.getPosition() + sf::Vector2f(36, 34));
 	window.draw(text);
-	text.setText(std::to_string(levelJellyCount));
+	text.setText(std::to_string(grid.totalJellies));
 	text.setPosition(leftPane.getPosition() + sf::Vector2f(48 - text.getWidth() / 2, 34));
 	window.draw(text);
 
@@ -1024,18 +1024,22 @@ void PlayState::loadLevel(int level) {
 		levelName = std::string("Section ") + char('A' + level);
 	}
 
+	// Determine how many jellies and flags to prep
+	int jellies = 10 + level;
+	if (NEW_MODE && jellies > 20) {
+		jellies = 20;
+	}
 	int extraFlags = 5;
 	extraFlags -= level / 2;
 	if (extraFlags < 0) {
 		extraFlags = 0;
 	}
+	grid.generateGrid(jellies, 3);
+	flags = grid.totalJellies + extraFlags;
+	levelFlagCount = flags;
+	shellsFound = 0;
 
-	jellies = 10 + level;
-	if (NEW_MODE && jellies > 20) {
-		jellies = 20;
-	}
-	flags = jellies + extraFlags;
-
+	// Set up the water bar
 	int waterBlocks = 10;
 	if (NEW_MODE) {
 		waterBlocks = 10 - level / 3;
@@ -1052,15 +1056,6 @@ void PlayState::loadLevel(int level) {
 	waterBar.setMaxBlocks(waterBlocks);
 	waterBar.resetSystem();
 
-	// Todo: ensure the jelly count is correct! Generation can fail to place all jellies!
-	//grid.generateGrid(jellies, 2 + std::rand() % 3);
-	grid.generateGrid(jellies, 3);
-
-	levelJellyCount = jellies;
-	levelFlagCount = flags;
-
-	shellsFound = 0;
-	
 	// Reset time
 	levelTime = 0;
 	levelTimeTicking = false;

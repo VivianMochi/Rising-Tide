@@ -124,8 +124,6 @@ private:
 
 	// Level stats
 	int level = -1;
-	int jellies = 0;
-	int levelJellyCount = 0;
 	int flags = 0;
 	int levelFlagCount = 0;
 	int shellsFound = 0;

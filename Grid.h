@@ -85,6 +85,11 @@ public:
 	// Used for debugging
 	bool xray = false;
 
+	// Total jelly count on the board
+	int totalJellies = 0;
+	// Amount of jellies unaccounted for via completed tabs
+	int hiddenJellies = 0;
+
 private:
 	virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 

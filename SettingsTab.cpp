@@ -27,6 +27,8 @@ void SettingsTab::init() {
 	addCheckbox(settingWindowed, sf::Vector2f(63, 24));
 	addCheckbox(settingCursor, sf::Vector2f(63, 34));
 	addCheckbox(settingShake, sf::Vector2f(63, 44));
+
+	// Todo: add checkbox for particles under game/effects section
 }
 
 void SettingsTab::update(sf::Time elapsed) {
