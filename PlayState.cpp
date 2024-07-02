@@ -92,7 +92,8 @@ void PlayState::init() {
 	paletteSelect.setTexture(rm::loadTexture("Resource/Image/PalettePane.png"));
 	paletteSelect.setPosition(leftPane.getPosition() + sf::Vector2f(2, PALETTE_SELECT_TOP));
 
-	title.setTexture(rm::loadTexture("Resource/Image/Title.png"));
+	initEntity(title);
+
 	sun.setTexture(rm::loadTexture("Resource/Image/Sun.png"));
 	clouds.setTexture(rm::loadTexture("Resource/Image/Clouds.png"));
 	dunes.setTexture(rm::loadTexture("Resource/Image/Dunes.png"));
@@ -524,6 +525,9 @@ void PlayState::update(sf::Time elapsed) {
 
 	const bool inGame = (phase == playing || phase == submitting || phase == results || phase == loss);
 
+	// Update title
+	title.update(elapsed);
+
 	// Update shop
 	shop.update(elapsed);
 
@@ -670,8 +674,7 @@ void PlayState::update(sf::Time elapsed) {
 	soundClick.setVolume(100 * soundVolumeModifier);
 
 	// Update background position
-	title.setPosition(getGame()->gameSize.x / 2 - 80 / 2, menuPaneY + 32);
-	title.setColor(cm::getWaterColor());
+	title.setPosition(getGame()->gameSize.x / 2 - 103 / 2, menuPaneY + 18);
 	sun.setPosition(141, -1 - cameraY * 0.9);
 	sun.setColor(cm::getFlashColor());
 	clouds.setPosition(0, -25 - cameraY * 0.9);

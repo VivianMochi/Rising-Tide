@@ -11,6 +11,7 @@
 #include "JellyShop.h"
 #include "Aquarium.h"
 #include "SettingsTab.h"
+#include "Title.h"
 #include <SFML/Audio.hpp>
 #include <map>
 
@@ -171,7 +172,7 @@ private:
 	sf::Sprite paletteSelect;
 	WaterBar waterBar;
 	
-	sf::Sprite title;
+	Title title;
 	sf::Sprite sun;
 	sf::Sprite clouds;
 	sf::Sprite dunes;
