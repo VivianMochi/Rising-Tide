@@ -60,15 +60,6 @@ void PlayState::init() {
 	buttonPaletteRight = std::make_shared<Button>("PaletteRight", rm::loadTexture("Resource/Image/PaletteButtons.png"), sf::IntRect(36, 0, 19, 10));
 	buttons.initButton(buttonPaletteRight);
 
-	barMusic = std::make_shared<ButtonBar>("Music", 5);
-	initEntity(*barMusic);
-	barMusic->selectSegment(saveData[musicVolume]);
-	buttons.addButton(barMusic);
-	barSound = std::make_shared<ButtonBar>("Sound", 5);
-	initEntity(*barSound);
-	barSound->selectSegment(saveData[soundVolume]);
-	buttons.addButton(barSound);
-
 	initEntity(grid);
 	grid.setPosition(GRID_LEFT, getGame()->gameSize.y + 4);
 
@@ -115,7 +106,7 @@ void PlayState::init() {
 	// Load music
 	std::string song = "Tide";
 	musicBase.openFromFile("Resource/Music/" + song + "0.ogg");
-	musicBase.setVolume(100 * std::pow(saveData[musicVolume] / 4.0f, 2));
+	musicBase.setVolume(100 * std::pow(saveData[settingMusic] / 9.0f, 2));
 	musicBase.setLoop(true);
 
 	musicActive.openFromFile("Resource/Music/" + song + "1.ogg");
@@ -155,16 +146,28 @@ void PlayState::gotEvent(sf::Event event) {
 					soundSelect.play();
 				}
 				else if (clickedButton.substr(0, 8) == "setting-") {
-					// Adjusting a saveData entry directly
-					if (saveData[clickedButton] == 0) {
-						saveData[clickedButton] = 1;
+					if (clickedButton.substr(0, 13) == "setting-music") {
+						// Adjusting music volume
+						saveData[settingMusic] = std::stoi(clickedButton.substr(13));
+						save();
+					}
+					else if (clickedButton.substr(0, 13) == "setting-sound") {
+						// Adjusting sound volume
+						saveData[settingSound] = std::stoi(clickedButton.substr(13));
 						save();
 					}
 					else {
-						saveData[clickedButton] = 0;
-						save();
+						// Adjusting a saveData entry directly
+						if (saveData[clickedButton] == 0) {
+							saveData[clickedButton] = 1;
+							save();
+						}
+						else {
+							saveData[clickedButton] = 0;
+							save();
+						}
+						adjustSetting(clickedButton, saveData[clickedButton]);
 					}
-					adjustSetting(clickedButton, saveData[clickedButton]);
 					soundSelect.play();
 				}
 				else if (getGame()->getCursorPosition().y < 81) {
@@ -247,18 +250,6 @@ void PlayState::gotEvent(sf::Event event) {
 				else if (clickedButton == "PaletteRight") {
 					saveData[selectedPalette] = cm::getCurrentPalette() + 1;
 					cm::selectPalette(saveData[selectedPalette]);
-					soundSelect.play();
-					save();
-				}
-				else if (clickedButton.substr(0, 5) == "Music") {
-					int value = std::stoi(clickedButton.substr(5));
-					saveData[musicVolume] = value;
-					soundSelect.play();
-					save();
-				}
-				else if (clickedButton.substr(0, 5) == "Sound") {
-					int value = std::stoi(clickedButton.substr(5));
-					saveData[soundVolume] = value;
 					soundSelect.play();
 					save();
 				}
@@ -399,9 +390,6 @@ void PlayState::gotEvent(sf::Event event) {
 			// Demo keys
 			if (event.key.code == sf::Keyboard::O) {
 				showTimer = !showTimer;
-			}
-			else if (event.key.code == sf::Keyboard::P) {
-				showVolume = !showVolume;
 			}
 		}
 	}
@@ -605,10 +593,6 @@ void PlayState::update(sf::Time elapsed) {
 	buttonPaletteRight->setPosition(leftPane.getPosition() + sf::Vector2f(paletteSelectLeft + 36, PALETTE_BUTTONS_TOP));
 	buttonPaletteRight->enabled = !atRightEnd && buttonsActive;
 
-	barMusic->setPosition(rightPane.getPosition() + sf::Vector2f(showVolume ? 25 : 1000, 80));
-	barMusic->enabled = buttonsActive;
-	barSound->setPosition(rightPane.getPosition() + sf::Vector2f(showVolume ? 25 : 1000, 92));
-	barSound->enabled = buttonsActive;
 	buttons.update(elapsed);
 
 	// Update water
@@ -617,7 +601,7 @@ void PlayState::update(sf::Time elapsed) {
 	water.setPosition(grid.getPosition() + sf::Vector2f(0, 100));
 
 	// Update music
-	float musicVolumeModifier = std::pow(saveData[musicVolume] / 4.0f, 2);
+	float musicVolumeModifier = std::pow(saveData[settingMusic] / 9.0f, 2);
 	float volumeBase = 100 * musicVolumeModifier;
 	float volumeActive = 0;
 	float volumeBeat = 0;
@@ -659,7 +643,7 @@ void PlayState::update(sf::Time elapsed) {
 	adjustMusicVolume(musicWarning, volumeWarning, elapsed.asSeconds() * 3);
 
 	// Update sound effect volumes
-	float soundVolumeModifier = std::pow(saveData[soundVolume] / 4.0f, 2);
+	float soundVolumeModifier = std::pow(saveData[settingSound] / 9.0f, 2);
 	soundDig.setVolume(100 * soundVolumeModifier);
 	soundFlag.setVolume(100 * soundVolumeModifier);
 	soundUnflag.setVolume(100 * soundVolumeModifier);
@@ -934,12 +918,12 @@ void PlayState::load() {
 	saveData[best] = 0;
 	saveData[selectedPalette] = -1;
 	saveData[unlockedPalettes] = 1;
-	saveData[musicVolume] = 2;
-	saveData[soundVolume] = 2;
 	// Initial settings
 	saveData[settingWindowed] = 1;
 	saveData[settingCursor] = 1;
 	saveData[settingShake] = 1;
+	saveData[settingMusic] = 9;
+	saveData[settingSound] = 9;
 
 	std::ifstream saveFile("Save.txt");
 	if (saveFile.is_open()) {
@@ -1122,6 +1106,8 @@ void PlayState::toggleSettingsTab() {
 }
 
 void PlayState::adjustSetting(std::string setting, int newValue) {
+	//std::cout << "Set " << setting << " to " << std::to_string(newValue) << "\n";
+	
 	if (setting == settingWindowed) {
 		getGame()->setFullscreen(!newValue);
 	}

@@ -41,8 +41,6 @@ const std::string best = "best";
 const std::string selectedPalette = "palette";
 // The number of palettes that have been unlocked
 const std::string unlockedPalettes = "unlocked";
-const std::string musicVolume = "music";
-const std::string soundVolume = "sound";
 
 struct ModeOptions {
 	bool digTime = true;
@@ -138,7 +136,6 @@ private:
 
 	// Demo holdovers
 	bool showTimer = false;
-	bool showVolume = false;
 
 	ButtonManager buttons;
 
@@ -155,8 +152,6 @@ private:
 	std::shared_ptr<Button> buttonPaletteLeft;
 	std::shared_ptr<Button> buttonPaletteLink;
 	std::shared_ptr<Button> buttonPaletteRight;
-	std::shared_ptr<ButtonBar> barMusic;
-	std::shared_ptr<ButtonBar> barSound;
 
 	Grid grid;
 	Water water;

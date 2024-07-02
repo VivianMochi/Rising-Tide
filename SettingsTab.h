@@ -3,11 +3,14 @@
 #include "Entity.h"
 #include "ButtonManager.h"
 #include "Checkbox.h"
+#include "ValueAdjuster.h"
 
 // Settings
 const std::string settingWindowed = "setting-windowed";
 const std::string settingCursor = "setting-cursor";
 const std::string settingShake = "setting-shake";
+const std::string settingMusic = "setting-music";
+const std::string settingSound = "setting-sound";
 
 class SettingsTab : public Entity {
 public:
@@ -23,6 +26,7 @@ private:
 
 	// Construction helpers
 	void addCheckbox(std::string setting, sf::Vector2f position);
+	void addAdjuster(std::string setting, sf::Vector2f position);
 
 	sf::Sprite backdropSprite;
 	sf::Sprite edgeShadowSprite;
@@ -30,5 +34,6 @@ private:
 	ButtonManager buttons;
 	std::shared_ptr<Button> buttonSettings;
 	std::map<std::string, std::shared_ptr<Checkbox>> checkboxes;
+	std::map<std::string, std::shared_ptr<ValueAdjuster>> adjusters;
 };
 

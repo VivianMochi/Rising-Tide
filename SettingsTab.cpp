@@ -23,10 +23,12 @@ void SettingsTab::init() {
 	buttonSettings->setPosition(2, 4);
 	buttons.initButton(buttonSettings);
 
-	// Setup buttons
 	addCheckbox(settingWindowed, sf::Vector2f(63, 24));
 	addCheckbox(settingCursor, sf::Vector2f(63, 34));
 	addCheckbox(settingShake, sf::Vector2f(63, 44));
+
+	addAdjuster(settingMusic, sf::Vector2f(151, 24));
+	addAdjuster(settingSound, sf::Vector2f(151, 34));
 
 	// Todo: add checkbox for particles under game/effects section
 }
@@ -78,4 +80,15 @@ void SettingsTab::addCheckbox(std::string setting, sf::Vector2f position) {
 	checkboxes[setting] = std::make_shared<Checkbox>(setting);
 	checkboxes[setting]->setPosition(position);
 	buttons.initButton(checkboxes[setting]);
+}
+
+void SettingsTab::addAdjuster(std::string setting, sf::Vector2f position) {
+	// Get state info to pull save data from
+	PlayState *playState = dynamic_cast<PlayState*>(state);
+	if (playState) {
+		adjusters[setting] = std::make_shared<ValueAdjuster>(setting);
+		adjusters[setting]->setPosition(position);
+		buttons.initButton(adjusters[setting]);
+		adjusters[setting]->setValue(playState->saveData[setting]);
+	}
 }
