@@ -20,7 +20,7 @@ void SettingsTab::init() {
 	buttons.init();
 
 	buttonSettings = std::make_shared<Button>("Settings", rm::loadTexture("Resource/Image/SettingsButton.png"), sf::IntRect(0, 0, 13, 16));
-	buttonSettings->setPosition(2, 4);
+	buttonSettings->setPosition(2, 36);
 	buttons.initButton(buttonSettings);
 
 	addCheckbox(settingWindowed, sf::Vector2f(63, 24));
