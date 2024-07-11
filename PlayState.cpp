@@ -102,6 +102,7 @@ void PlayState::init() {
 	soundStart.setBuffer(rm::loadSoundBuffer("Resource/Sound/Start.wav"));
 	soundWater.setBuffer(rm::loadSoundBuffer("Resource/Sound/Water.wav"));
 	soundClick.setBuffer(rm::loadSoundBuffer("Resource/Sound/Click.wav"));
+	soundShopJingle.setBuffer(rm::loadSoundBuffer("Resource/Sound/ShopJingle.wav"));
 
 	// Load music
 	std::string song = "Tide";
@@ -120,6 +121,9 @@ void PlayState::init() {
 	musicWarning.openFromFile("Resource/Music/" + song + "3.ogg");
 	musicWarning.setVolume(0);
 	musicWarning.setLoop(true);
+
+	musicShop.openFromFile("Resource/Music/Shop.ogg");
+	musicShop.setLoop(true);
 
 	if (!DEBUG_MUSIC_DISABLED) {
 		musicBase.play();
@@ -184,7 +188,9 @@ void PlayState::gotEvent(sf::Event event) {
 					phase = shopping;
 					shop.setActive(true);
 					aquarium->setActive(true);
-					soundSelect.play();
+					soundShopJingle.play();
+					musicShop.stop();
+					shopMusicDelayTime = 1.71;
 				}
 				else if (clickedButton == "Exit") {
 					getGame()->exit();
@@ -291,6 +297,10 @@ void PlayState::gotEvent(sf::Event event) {
 					shop.setActive(false);
 					aquarium->setActive(false);
 					goToMenu();
+					soundSelect.play();
+				}
+				else if (clickedButton == "Settings") {
+					toggleSettingsTab();
 					soundSelect.play();
 				}
 			}
@@ -468,6 +478,10 @@ void PlayState::update(sf::Time elapsed) {
 	if (alertFlashTime < 0) {
 		alertFlashTime = 0;
 	}
+	shopMusicDelayTime -= elapsed.asSeconds();
+	if (shopMusicDelayTime < 0) {
+		shopMusicDelayTime = 0;
+	}
 
 	// Update camera position
 	float desiredY = 0;
@@ -522,8 +536,10 @@ void PlayState::update(sf::Time elapsed) {
 	// Update aquarium
 	aquarium->update(elapsed);
 
-	// Update settings
+	// Update settings tab
 	settings.update(elapsed);
+	// Todo: visualize if hovering over water checkbox or palette select
+	//visualizeWater = settingsOpen;
 
 	// Update grid
 	desiredY = getGame()->gameSize.y + 4;
@@ -567,17 +583,18 @@ void PlayState::update(sf::Time elapsed) {
 
 	// Update buttons
 	bool buttonsActive = phase != submitting && phase != results && phase != loss && settingsOpen == false;
-	buttonStart->setPosition(93, menuPaneY + 81);
-	buttonClassic->setPosition(20, menuPaneY + 81);
-	buttonSpeedy->setPosition(20, menuPaneY + 97);
-	buttonShop->setPosition(93, menuPaneY + 97);
-	buttonExit->setPosition(93, menuPaneY + (DEBUG_DEMO_MODE ? 2000 : 113));
+	buttonStart->setPosition(93, menuPaneY + 80);
+	buttonClassic->setPosition(-200, menuPaneY + 81);
+	buttonSpeedy->setPosition(-200, menuPaneY + 97);
+	buttonShop->setPosition(93, menuPaneY + 98);
+	buttonExit->setPosition(93, menuPaneY + (DEBUG_DEMO_MODE ? 2000 : 116));
 	buttonSubmit->setPosition(leftPane.getPosition() + sf::Vector2f(2, 88));
 	buttonSubmit->enabled = phase != submitting && settingsOpen == false;
 	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 117));
 	buttonMenu->enabled = buttonsActive;
-	buttonSettings->setPosition(leftPane.getPosition() + sf::Vector2f(45, 117));
-	buttonSettings->enabled = buttonsActive;
+	float settingsX = std::max(leftPane.getPosition().x + 45, 2.0f);
+	buttonSettings->setPosition(sf::Vector2f(settingsX, 117));
+	buttonSettings->enabled = buttonsActive && phase != shopping;
 	buttonShellA->setPosition(rightPane.getPosition() + sf::Vector2f(31, 99));
 	buttonShellA->enabled = shells > 0 && buttonsActive;
 	buttonShellB->setPosition(rightPane.getPosition() + sf::Vector2f(31, 117));
@@ -596,7 +613,8 @@ void PlayState::update(sf::Time elapsed) {
 	buttons.update(elapsed);
 
 	// Update water
-	water.masterDepth += (waterBar.waterLevel * 10 - water.masterDepth) * elapsed.asSeconds() * 2;
+	float desiredWaterDisplayDepth = std::clamp(waterBar.waterLevel * 10, visualizeWater ? 70 : 0, 100);
+	water.masterDepth += (desiredWaterDisplayDepth - water.masterDepth) * elapsed.asSeconds() * 2;
 	water.update(elapsed);
 	water.setPosition(grid.getPosition() + sf::Vector2f(0, 100));
 
@@ -637,10 +655,31 @@ void PlayState::update(sf::Time elapsed) {
 			volumeWarning = 25 * musicVolumeModifier;
 		}
 	}
-	adjustMusicVolume(musicBase, volumeBase, elapsed.asSeconds() * 3);
-	adjustMusicVolume(musicActive, volumeActive, elapsed.asSeconds() * 3);
-	adjustMusicVolume(musicBeat, volumeBeat, elapsed.asSeconds() * 3);
-	adjustMusicVolume(musicWarning, volumeWarning, elapsed.asSeconds() * 3);
+	if (phase == shopping) {
+		adjustMusicVolume(musicBase, 0, elapsed.asSeconds() * 3);
+		adjustMusicVolume(musicActive, 0, elapsed.asSeconds() * 3);
+		adjustMusicVolume(musicBeat, 0, elapsed.asSeconds() * 3);
+		adjustMusicVolume(musicWarning, 0, elapsed.asSeconds() * 3);
+
+		if (shopMusicDelayTime <= 0) {
+			if (musicShop.getStatus() == sf::SoundSource::Status::Stopped) {
+				musicShop.setVolume(volumeBase);
+				musicShop.play();
+			}
+			adjustMusicVolume(musicShop, volumeBase, elapsed.asSeconds() * 3);
+		}
+	}
+	else {
+		adjustMusicVolume(musicBase, volumeBase, elapsed.asSeconds() * 3);
+		adjustMusicVolume(musicActive, volumeActive, elapsed.asSeconds() * 3);
+		adjustMusicVolume(musicBeat, volumeBeat, elapsed.asSeconds() * 3);
+		adjustMusicVolume(musicWarning, volumeWarning, elapsed.asSeconds() * 3);
+
+		adjustMusicVolume(musicShop, 0, elapsed.asSeconds() * 3);
+		if (musicShop.getStatus() == sf::SoundSource::Status::Playing && musicShop.getVolume() < 1) {
+			musicShop.stop();
+		}
+	}
 
 	// Update sound effect volumes
 	float soundVolumeModifier = std::pow(saveData[settingSound] / 9.0f, 2);
@@ -656,6 +695,7 @@ void PlayState::update(sf::Time elapsed) {
 	soundStart.setVolume(100 * soundVolumeModifier);
 	soundWater.setVolume(100 * soundVolumeModifier);
 	soundClick.setVolume(100 * soundVolumeModifier);
+	soundShopJingle.setVolume(100 * soundVolumeModifier);
 
 	// Update background position
 	title.setPosition(getGame()->gameSize.x / 2 - 103 / 2, menuPaneY + 18);

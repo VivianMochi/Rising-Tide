@@ -26,7 +26,7 @@ void JellyShop::init() {
 		"Spicy!" };
 	shopData[shopPaletteMoon] = { 2, 500, "Moon", "Moon Palette",
 		"Just like a\nfull moon!\nUnlocks Moon Jelly" };
-	shopData[shopPaletteCustom] = { 2, 1000, "Custom", "Custom Palette",
+	shopData[shopPaletteCustom] = { 2, 9000, "Custom", "Custom Palette",
 		"Build your own!" };
 
 	buttons.setState(state);
@@ -34,15 +34,18 @@ void JellyShop::init() {
 	shopRowManager.setState(state);
 	shopRowManager.init();
 
-	buttonMenu = std::make_shared<Button>("Menu");
+	buttonMenu = std::make_shared<Button>("Menu", rm::loadTexture("Resource/Image/MenuButton.png"), sf::IntRect(0, 0, 41, 16));
 	buttons.initButton(buttonMenu);
-	buttonBuy = std::make_shared<Button>("Buy");
+	buttonBuy = std::make_shared<Button>("Buy", rm::loadTexture("Resource/Image/BuyButton.png"), sf::IntRect(0, 0, 40, 16));
+	buttonBuy->showText = true;
 	buttons.initButton(buttonBuy);
+	buttonSettings = std::make_shared<Button>("Settings", rm::loadTexture("Resource/Image/SettingsButton.png"), sf::IntRect(0, 0, 13, 16));
+	buttons.initButton(buttonSettings);
 
 	leftPane.setTexture(rm::loadTexture("Resource/Image/ShopLeftPane.png"));
 	leftPane.setPosition(-89, 0);
 	leftBackdrop.setTexture(rm::loadTexture("Resource/Image/ShopLeftBackdrop.png"));
-	leftBackdrop.setPosition(-89, 16);
+	leftBackdrop.setPosition(-89, 19);
 	detailsPane.setTexture(rm::loadTexture("Resource/Image/ShopDetailsPane.png"));
 	detailsPane.setPosition(240, 73);
 
@@ -57,6 +60,13 @@ void JellyShop::init() {
 	for (auto &section : shopRows) {
 		std::sort(section.begin(), section.end(), [](std::shared_ptr<ShopRow> &rowA, std::shared_ptr<ShopRow> &rowB) { return rowA->cost < rowB->cost; });
 	}
+
+	// Initialize Aurelia & speech bubble
+	aurelia.setState(state);
+	aurelia.init();
+	aurelia.setPosition(500, 500);
+	speechBubble.setTexture(rm::loadTexture("Resource/Image/SpeechBubble.png"));
+	speechBubble.setPosition(500, 500);
 }
 
 void JellyShop::update(sf::Time elapsed) {
@@ -66,7 +76,7 @@ void JellyShop::update(sf::Time elapsed) {
 	}
 	leftPane.move((sf::Vector2f(desiredX, 0) - leftPane.getPosition()) * elapsed.asSeconds() * 5.0f);
 	leftPane.setColor(cm::getUIColor());
-	leftBackdrop.setPosition(leftPane.getPosition() + sf::Vector2f(0, 16));
+	leftBackdrop.setPosition(leftPane.getPosition() + sf::Vector2f(0, 19));
 	leftBackdrop.setColor(cm::getUIColor());
 
 	desiredX = 240;
@@ -87,7 +97,7 @@ void JellyShop::update(sf::Time elapsed) {
 
 	// Update rows
 	PlayState *playState = dynamic_cast<PlayState*>(state);
-	int offset = 17;
+	int offset = 20;
 	for (int section = 0; section < shopRows.size(); section++) {
 		for (int i = 0; i < shopRows[section].size(); i++) {
 			if (i == 0) {
@@ -104,16 +114,44 @@ void JellyShop::update(sf::Time elapsed) {
 	shopRowManager.update(elapsed);
 
 	// Update max scroll
-	scrollMax = offset - 116;
+	scrollMax = offset - 113;
 
 	// Update buttons
-	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 119));
-	buttonBuy->setPosition(detailsPane.getPosition() + sf::Vector2f(48, 47));
+	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 117));
+	buttonSettings->setPosition(leftPane.getPosition() + sf::Vector2f(45, 117));
+	buttonBuy->setPosition(detailsPane.getPosition() + sf::Vector2f(110, 45));
 	buttonBuy->enabled = false;
-	if (selection != "" && playState && !playState->saveData[selection]) {
-		buttonBuy->enabled = true;
+	buttonBuy->text = "Buy";
+	if (selection != "") {
+		if (playState) {
+			if (!playState->saveData[selection]) {
+				buttonBuy->enabled = true;
+			}
+			else {
+				buttonBuy->text = "Paid";
+			}
+		}
 	}
 	buttons.update(elapsed);
+
+	// Update Aurelia
+	aurelia.setPosition(detailsPane.getPosition() + sf::Vector2f(99, -62));
+	aurelia.update(elapsed);
+
+	// Update speech bubble
+	sf::Vector2f desiredPosition = detailsPane.getPosition() + sf::Vector2f(3, -18);
+	if (speechTime <= 0) {
+		desiredPosition = detailsPane.getPosition() + sf::Vector2f(3, 3);
+	}
+	speechBubble.move((desiredPosition - speechBubble.getPosition()) * elapsed.asSeconds() * 10.0f);
+	if (speechBubble.getPosition().x < desiredPosition.x) {
+		// Speech bubble can never be left of its target, helps shoo it away when shop is closed
+		speechBubble.move(desiredPosition.x - speechBubble.getPosition().x, 0);
+	}
+	speechBubble.setColor(cm::getFlashColor());
+	if (speechTime > 0) {
+		speechTime -= elapsed.asSeconds();
+	}
 
 	// Update aquarium
 	if (shopActive) {
@@ -156,6 +194,8 @@ void JellyShop::setActive(bool active) {
 	if (active) {
 		selection = "";
 		aquariumFocused = false;
+		aurelia.playWelcomeAnimation();
+		speak("Welcome!", 3);
 	}
 }
 
@@ -164,17 +204,27 @@ std::string JellyShop::clickPosition(sf::Vector2f position) {
 	PlayState *playState = dynamic_cast<PlayState*>(state);
 
 	if (clickedButton == "Buy" && selection != "" && playState && !playState->saveData[selection]) {
+		// Do purchase logic
 		if (playState->saveData[totalJellies] >= shopData[selection].cost) {
 			playState->saveData[totalJellies] -= shopData[selection].cost;
 			playState->saveData[selection] = 1;
 			playState->save();
+
+			aurelia.playJoyAnimation(3);
+			aurelia.playTalkAnimation(1);
+			speak("Thank you!!", 3);
+		}
+		else {
+			aurelia.playAwkwardAnimation(3);
+			aurelia.playTalkAnimation(1);
+			speak("Need more $", 3);
 		}
 	}
 	else if (clickedButton == "" && position.x >= 89 && position.y <= 72) {
 		// Focused the aquarium
 		aquariumFocused = true;
 	}
-	else if (clickedButton == "" && position.y >= 16 && position.y <= 116) {
+	else if (clickedButton == "" && position.y >= 19 && position.y <= 114) {
 		// Clicked a shop row
 		clickedButton = shopRowManager.clickPosition(position);
 		if (shopData.count(clickedButton) > 0) {
@@ -190,6 +240,16 @@ void JellyShop::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	text.setTexture(rm::loadTexture("Resource/Image/Font.png"));
 	text.setColor(cm::getUIColorDark());
 
+	// Render Aurelia and speech bubble
+	if (speechText != "") {
+		target.draw(speechBubble);
+		text.setColor(cm::getJellyColor());
+		text.setText(speechText);
+		text.setPosition(speechBubble.getPosition() + sf::Vector2f(47 - text.getWidth() / 2, 3));
+		target.draw(text);
+	}
+	target.draw(aurelia);
+
 	target.draw(detailsPane);
 
 	target.draw(leftBackdrop);
@@ -199,7 +259,7 @@ void JellyShop::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	for (int i = 0; i < sections.size(); i++) {
 		if (shopRows.size() > i && !shopRows[i].empty()) {
 			text.setColor(cm::getFlagColor());
-			text.setText(sections[i]);
+			text.setText("<" + sections[i] + ">");
 			text.setPosition(leftPane.getPosition().x + 82 / 2 - text.getWidth() / 2, shopRows[i][0]->getPosition().y - 9);
 			target.draw(text);
 		}
@@ -207,9 +267,9 @@ void JellyShop::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 
 	// Render scroll bar
 	float scrollPercent = scroll / scrollMax;
-	sf::RectangleShape scrollBar(sf::Vector2f(4, 20));
-	scrollBar.setFillColor(cm::getUIColorMedium());
-	scrollBar.setPosition(leftPane.getPosition() + sf::Vector2f(82, 16 + 2 + 77 * scrollPercent));
+	sf::Sprite scrollBar(rm::loadTexture("Resource/Image/ScrollBar.png"));
+	scrollBar.setColor(cm::getUIColor());
+	scrollBar.setPosition(leftBackdrop.getPosition() + sf::Vector2f(82, 2 + 69 * scrollPercent));
 	target.draw(scrollBar);
 
 	target.draw(leftPane);
@@ -217,35 +277,57 @@ void JellyShop::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	// Render jelly count
 	PlayState *playState = dynamic_cast<PlayState*>(state);
 	if (playState) {
-		ra::renderJelly(target, states, leftPane.getPosition() + sf::Vector2f(3, 3));
 		text.setColor(cm::getUIColorDark());
-		text.setText(std::to_string(playState->saveData[totalJellies]));
-		text.setPosition(leftPane.getPosition() + sf::Vector2f(21, 4));
+		text.setText("$" + std::to_string(std::clamp(playState->saveData[totalJellies], 0, 9999)));
+		text.setPosition(leftPane.getPosition() + sf::Vector2f(66 - text.getWidth() / 2, 5));
 		target.draw(text);
 	}
 
-	// Render selected text
+	// Render selected details
+	std::string titleText = "";
+	std::string descriptionText = "";
 	if (selection != "") {
-		text.setColor(cm::getUIColorDark());
-		text.setText(shopData.at(selection).fullName);
-		text.setPosition(detailsPane.getPosition() + sf::Vector2f(3, 3));
-		target.draw(text);
+		titleText = shopData.at(selection).fullName;
+		descriptionText = shopData.at(selection).description;
 
-		text.setColor(cm::getUIColorMedium());
-		int offset = 15;
-		std::string temp = shopData.at(selection).description;
-		while (temp.find("\n") != -1) {
-			text.setText(temp.substr(0, temp.find("\n")));
-			text.setPosition(detailsPane.getPosition() + sf::Vector2f(76 - text.getWidth() / 2, offset));
-			target.draw(text);
-			temp = temp.substr(temp.find("\n") + 1);
-			offset += 10;
+		// Render cost
+		text.setColor(cm::getUIColorDark());
+		if (playState && playState->saveData[selection]) {
+			text.setColor(cm::getUIColorMedium());
 		}
-		text.setText(temp);
-		text.setPosition(detailsPane.getPosition() + sf::Vector2f(76 - text.getWidth() / 2, offset));
+		text.setText("$" + std::to_string(shopData.at(selection).cost));
+		text.setPosition(detailsPane.getPosition() + sf::Vector2f(130 - text.getWidth() / 2, 33));
 		target.draw(text);
 	}
+	// Render selection name
+	text.setColor(cm::getUIColorDark());
+	text.setText(titleText);
+	text.setPosition(detailsPane.getPosition() + sf::Vector2f(6, 6));
+	target.draw(text);
+
+	// Render detail text
+	text.setColor(cm::getUIColorBright());
+	int offset = 21;
+	std::string temp = descriptionText;
+	int extraLines = std::count(temp.begin(), temp.end(), '\n');
+	offset = 21 + ((3 - extraLines) / 3.0) * 15;
+	while (temp.find("\n") != -1) {
+		text.setText(temp.substr(0, temp.find("\n")));
+		text.setPosition(detailsPane.getPosition() + sf::Vector2f(55 - text.getWidth() / 2, offset));
+		target.draw(text);
+		temp = temp.substr(temp.find("\n") + 1);
+		offset += 10;
+	}
+	text.setText(temp);
+	text.setPosition(detailsPane.getPosition() + sf::Vector2f(55 - text.getWidth() / 2, offset));
+	target.draw(text);
 
 	target.draw(buttons);
+}
+
+void JellyShop::speak(std::string text, float duration) {
+	speechBubble.setPosition(detailsPane.getPosition() + sf::Vector2f(240, -18));
+	speechText = text;
+	speechTime = duration;
 }
 

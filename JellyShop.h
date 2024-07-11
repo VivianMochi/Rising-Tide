@@ -5,6 +5,7 @@
 #include "ButtonBar.h"
 #include "ShopRow.h"
 #include "Aquarium.h"
+#include "JellyGirl.h"
 #include <map>
 
 const std::vector<std::string> sections = { "Modes", "Extras", "Palettes" };
@@ -47,6 +48,8 @@ public:
 private:
 	virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 
+	void speak(std::string text, float duration);
+
 	std::map<std::string, ShopData> shopData;
 
 	bool shopActive = false;
@@ -58,11 +61,17 @@ private:
 	ButtonManager buttons;
 	std::shared_ptr<Button> buttonMenu;
 	std::shared_ptr<Button> buttonBuy;
+	std::shared_ptr<Button> buttonSettings;
 	ButtonManager shopRowManager;
 	std::vector<std::vector<std::shared_ptr<ShopRow>>> shopRows;
 
 	sf::Sprite leftPane;
 	sf::Sprite leftBackdrop;
 	sf::Sprite detailsPane;
+
+	JellyGirl aurelia;
+	sf::Sprite speechBubble;
+	std::string speechText = "";
+	float speechTime = 0;
 };
 

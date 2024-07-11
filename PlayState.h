@@ -112,6 +112,9 @@ private:
 	float shellFlashTime = 0;
 	float shellMarkerFlashTime = 0;
 	float alertFlashTime = 0;
+	float shopMusicDelayTime = 0;
+
+	bool visualizeWater = false;
 
 	float submitTime = 0;
 	bool poppingFlags = false;
@@ -184,10 +187,12 @@ private:
 	sf::Sound soundStart;
 	sf::Sound soundWater;
 	sf::Sound soundClick;
+	sf::Sound soundShopJingle;
 
 	sf::Music musicBase;
 	sf::Music musicActive;
 	sf::Music musicBeat;
 	sf::Music musicWarning;
+	sf::Music musicShop;
 };
 

@@ -25,7 +25,8 @@ public:
 	// Increase the water level by a whole block
 	void flood(int amount = 1);
 	// Reset the water level
-	void drain();
+	// A value of -1 will full reset the water and increment bar
+	void drain(int amount = -1);
 
 	int waterLevel = 0;
 	int activeBlocks = 10;

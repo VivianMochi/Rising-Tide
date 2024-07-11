@@ -87,7 +87,7 @@ int BitmapText::getGlyphWidth(char character) const {
 	else if (character == '(' || character == ')' || character == '[' || character == ']') {
 		return 3;
 	}
-	else if ((character == '1' && !monowidth) || character == 'I' || character == '\\' || character == ' ') {
+	else if ((character == '1' && !monowidth) || character == 'I' || character == '\\' || character == ' ' || character == '<' || character == '>') {
 		return 4;
 	}
 	else if (character == '/') {
