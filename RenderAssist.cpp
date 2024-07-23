@@ -36,6 +36,25 @@ void ra::renderFlag(sf::RenderTarget &target, sf::RenderStates states, sf::Vecto
 	}
 }
 
+void ra::renderFlagBottom(sf::RenderTarget &target, sf::RenderStates states, sf::Vector2f position, bool dug) {
+	if (!dug) {
+		renderIcon(target, states, position, sf::Vector2f(0, 4), cm::getFlagColor());
+	}
+}
+
+void ra::renderFlagTop(sf::RenderTarget &target, sf::RenderStates states, sf::Vector2f position, bool dug) {
+	if (!dug) {
+		renderIcon(target, states, position, sf::Vector2f(1, 4), cm::getFlagColor());
+	}
+	else {
+		renderIcon(target, states, position, sf::Vector2f(3, 2), cm::getFlagColor());
+	}
+}
+
+void ra::renderFlagWake(sf::RenderTarget &target, sf::RenderStates states, sf::Vector2f position, bool frame) {
+	renderIcon(target, states, position, sf::Vector2f(frame ? 3 : 2, 4), cm::getWaterColor());
+}
+
 void ra::renderUIBox(sf::RenderTarget &target, sf::RenderStates states, sf::Vector2f position, int width, int style) {
 	sf::Sprite sprite(rm::loadTexture("Resource/Image/UIBox.png"));
 	sprite.setPosition(position);

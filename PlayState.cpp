@@ -62,7 +62,9 @@ void PlayState::init() {
 
 	initEntity(grid);
 	grid.setPosition(GRID_LEFT, getGame()->gameSize.y + 4);
+	grid.water = &water;
 
+	water = Water(100, 140);
 	initEntity(water);
 
 	initEntity(waterBar);
@@ -88,7 +90,7 @@ void PlayState::init() {
 	sun.setTexture(rm::loadTexture("Resource/Image/Sun.png"));
 	clouds.setTexture(rm::loadTexture("Resource/Image/Clouds.png"));
 	dunes.setTexture(rm::loadTexture("Resource/Image/Dunes.png"));
-	
+
 	// Load sounds
 	soundDig.setBuffer(rm::loadSoundBuffer("Resource/Sound/Dig.wav"));
 	soundFlag.setBuffer(rm::loadSoundBuffer("Resource/Sound/Flag.wav"));
@@ -222,6 +224,7 @@ void PlayState::gotEvent(sf::Event event) {
 							shellFlashTime = 1;
 							soundShellUse.play();
 							soundSelect.play();
+							water.turbulence = 1;
 						}
 						else {
 							soundError.play();
@@ -435,6 +438,7 @@ void PlayState::update(sf::Time elapsed) {
 
 			waterBar.increment();
 
+			// Logic for water rising, copied from bottom
 			if (waterBar.waterLevel > lastWaterLevel) {
 				soundWater.play();
 
@@ -442,6 +446,9 @@ void PlayState::update(sf::Time elapsed) {
 					flashTime = 0;
 					alertFlashTime = 1;
 				}
+
+				// Make turbulence
+				water.turbulence = 1;
 			}
 		}
 	}
@@ -539,7 +546,7 @@ void PlayState::update(sf::Time elapsed) {
 	// Update settings tab
 	settings.update(elapsed);
 	// Todo: visualize if hovering over water checkbox or palette select
-	//visualizeWater = settingsOpen;
+	visualizeWater = settingsOpen;
 
 	// Update grid
 	desiredY = getGame()->gameSize.y + 4;
@@ -613,11 +620,11 @@ void PlayState::update(sf::Time elapsed) {
 	buttons.update(elapsed);
 
 	// Update water
-	float desiredWaterDisplayDepth = std::clamp(waterBar.waterLevel * 10, visualizeWater ? 70 : 0, 100);
+	float desiredWaterDisplayDepth = std::clamp(waterBar.waterLevel * 10, visualizeWater ? 70 : 0, 100) + 20;
 	water.masterDepth += (desiredWaterDisplayDepth - water.masterDepth) * elapsed.asSeconds() * 2;
 	water.update(elapsed);
-	water.setPosition(grid.getPosition() + sf::Vector2f(0, 100));
-
+	water.setPosition(grid.getPosition() + sf::Vector2f(0, -20));
+	
 	// Update music
 	float musicVolumeModifier = std::pow(saveData[settingMusic] / 9.0f, 2);
 	float volumeBase = 100 * musicVolumeModifier;
@@ -884,6 +891,7 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(grid);
 
 	window.draw(water);
+	grid.renderOverWater(window);
 
 	// Render warning text
 	sf::Color warningColor = cm::getUIColorMediumDetail();
@@ -1105,7 +1113,6 @@ void PlayState::findItem(std::string item, bool flagged) {
 		}
 		else {
 			waterBar.flood(3);
-			//waterBar.resetSystem(true); // This resets the water block progress on a jelly dig
 			if (saveData[settingShake]) {
 				getGame()->screenShakeTime = 0.05;
 			}
@@ -1178,6 +1185,7 @@ void PlayState::doDigLogic() {
 
 		findItem(found);
 
+		// Logic for water rising
 		if (waterBar.waterLevel > lastWaterLevel) {
 			soundWater.play();
 
@@ -1185,6 +1193,9 @@ void PlayState::doDigLogic() {
 				flashTime = 0;
 				alertFlashTime = 1;
 			}
+
+			// Make turbulence
+			water.turbulence = 1;
 		}
 
 		playDigSound();

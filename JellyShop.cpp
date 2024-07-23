@@ -9,23 +9,23 @@
 
 void JellyShop::init() {
 	shopData[shopSpeedy] = { 0, 50, "Speedy", "Speedy Mode",
-		"Tide rises with time\ninstead of digs.\nBe quick!" };
+		"Tide rises\nover time.\nBe quick!" };
 	shopData[shopEndless] = { 0, 200, "Endless", "Endless Mode",
-		"Dear god\nit never ends..." };
+		"Tide removes\nrows, new\nrows appear!\nIt never ends..." };
 	shopData[shopPaletteSelect] = { 1, 100, "Palettes", "Palette Select",
-		"Choose your favorite\ncolor schemes!" };
+		"Choose your\nfavorite\ncolor schemes!" };
 	shopData[shopMusicPlayer] = { 1, 250, "Music", "Music Player",
 		"Play your\nfavorite songs!" };
 	shopData[shopPalettePbj] = { 2, 100, "PB&J", "PB&J Palette",
-		"Made with only\nthe finest\njellyfish jelly!" };
+		"Made with\njellyfish\njelly!" };
 	shopData[shopPaletteCream] = { 2, 200, "Cream", "Cream Palette",
 		"Mmmmmm...\nCreamy!" };
 	shopData[shopPaletteWatermelon] = { 2, 300, "Melon", "Watermelon Palette",
-		"Make sure\nyou don't\neat the seeds!" };
+		"Juicy and\nrefreshing!" };
 	shopData[shopPaletteSpicy] = { 2, 400, "Spicy", "Spicy Palette",
 		"Spicy!" };
 	shopData[shopPaletteMoon] = { 2, 500, "Moon", "Moon Palette",
-		"Just like a\nfull moon!\nUnlocks Moon Jelly" };
+		"Aurelia's\nfavorite!" };
 	shopData[shopPaletteCustom] = { 2, 9000, "Custom", "Custom Palette",
 		"Build your own!" };
 

@@ -5,8 +5,22 @@
 #include "ColorManager.h"
 
 Water::Water(int totalSegments) {
+	// Figure size
+	waterTextureSize.x = totalSegments * 2;
+	waterTextureSize.y = 135;
+
 	// Create segments
 	for (int i = 0; i < totalSegments; i++) {
+		segments.emplace_back();
+	}
+}
+
+Water::Water(int width, int height) {
+	waterTextureSize.x = width;
+	waterTextureSize.y = height;
+
+	// Create segments
+	for (int i = 0; i <= width / 2; i++) {
 		segments.emplace_back();
 	}
 }
@@ -21,37 +35,17 @@ void Water::update(sf::Time elapsed) {
 		waveTime -= 2 * 3.14;
 	}
 
-	// Update segments
-	float accelerationFactor = 20;
-	float velocityCap = 10;
-	for (int i = 0; i < segments.size(); i++) {
-		// Adjust for masterDepth
-		float thisDepth = masterDepth + 2 * std::sin(waveTime + i / 10.0f);
+	turbulence -= elapsed.asSeconds() / 2.0f;
+	if (turbulence < 0) {
+		turbulence = 0;
+	}
+	actualTurbulence += (turbulence - actualTurbulence) * elapsed.asSeconds() * 10.0f;
 
-		// I was trying to get the water to move like water but I couldn't get it to look right :(
-		/*
-		if (segments[i].depth < thisDepth) {
-			segments[i].depthVelocity += elapsed.asSeconds() * accelerationFactor;
-			if (segments[i].depthVelocity > velocityCap) {
-				segments[i].depthVelocity = velocityCap;
-			}
-		}
-		else {
-			segments[i].depthVelocity -= elapsed.asSeconds() * accelerationFactor;
-			if (segments[i].depthVelocity < -velocityCap) {
-				segments[i].depthVelocity = -velocityCap;
-			}
-		}
-		// Adjust for adjacent segments
-		if (i > 0) {
-			segments[i].depthVelocity += segments[i - 1].depth - segments[i].depth;
-		}
-		if (i < segments.size() - 1) {
-			segments[i].depthVelocity += segments[i + 1].depth - segments[i].depth;
-		}
-		segments[i].depthVelocity *= std::pow(0.75, elapsed.asSeconds());
-		segments[i].depth += segments[i].depthVelocity * elapsed.asSeconds();
-		*/
+	// Update segments
+	for (int i = 0; i < segments.size(); i++) {
+		float depthVariance = (2 - actualTurbulence) * std::sin(waveTime + i / 10.0f);
+		float turbulenceVariance = 2 * actualTurbulence * std::sin(-waveTime * 6.0f - i / 3.0f);
+		float thisDepth = masterDepth + depthVariance + turbulenceVariance;
 		segments[i].depth = thisDepth;
 	}
 }
@@ -59,18 +53,26 @@ void Water::update(sf::Time elapsed) {
 void Water::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	states.transform.translate(getPosition());
 
+	// Todo: case for really high water level, just render a water-colored rectangle
+
+	sf::RenderTexture waterTexture;
+	waterTexture.create(waterTextureSize.x, waterTextureSize.y);
+	waterTexture.clear(sf::Color(255, 255, 255, 0));
+
 	// Render segments
 	sf::Sprite segmentSprite(rm::loadTexture("Resource/Image/Water.png"));
-	segmentSprite.setColor(cm::getWaterColor());
 	for (int i = 0; i < segments.size(); i++) {
-		segmentSprite.setPosition(i * 2, -segments[i].depth);
-		target.draw(segmentSprite, states);
+		segmentSprite.setPosition(i * 2 - 1, waterTextureSize.y - segments[i].depth);
+		waterTexture.draw(segmentSprite);
 
 		sf::RectangleShape deepSegmentSprite(sf::Vector2f(2, 320 + segments[i].depth));
-		deepSegmentSprite.setPosition(segmentSprite.getPosition() + sf::Vector2f(0, 10));
-		sf::Color deepColor = cm::getWaterColor();
-		deepColor.a = 100;
-		deepSegmentSprite.setFillColor(deepColor);
-		target.draw(deepSegmentSprite, states);
+		deepSegmentSprite.setPosition(segmentSprite.getPosition() + sf::Vector2f(1, 12));
+		deepSegmentSprite.setFillColor(sf::Color(255, 255, 255, 75));
+		waterTexture.draw(deepSegmentSprite);
 	}
+
+	waterTexture.display();
+	sf::Sprite waterSprite(waterTexture.getTexture());
+	waterSprite.setColor(cm::getWaterColor());
+	target.draw(waterSprite, states);
 }

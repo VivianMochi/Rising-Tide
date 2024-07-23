@@ -4,7 +4,7 @@
 #include "PlayState.h"
 
 void Aquarium::init() {
-	water = Water(size.x / 2);
+	water = Water(size.x, size.y);
 	water.setState(state);
 	water.init();
 
@@ -40,7 +40,7 @@ void Aquarium::update(sf::Time elapsed) {
 	shadeAlpha += ((active ? 1 : 0) - shadeAlpha) * elapsed.asSeconds() * 2.5f;
 	aquariumY += ((active ? 0 : 135) - aquariumY) * elapsed.asSeconds() * 2.5f;
 
-	water.masterDepth = -5;
+	water.masterDepth = size.y - 10;
 	water.update(elapsed);
 
 	// Debug randomize flow

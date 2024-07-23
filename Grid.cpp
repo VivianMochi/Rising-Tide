@@ -5,6 +5,7 @@
 #include "ColorManager.h"
 #include "RenderAssist.h"
 #include "PlayState.h"
+#include "WaterBar.h"
 
 void Grid::init() {
 	gridSprite.setTexture(rm::loadTexture("Resource/Image/Grid.png"));
@@ -17,7 +18,10 @@ void Grid::update(sf::Time elapsed) {
 	for (int x = 0; x < GRID_WIDTH; x++) {
 		for (int y = 0; y < GRID_HEIGHT; y++) {
 			if (squares[x][y]) {
-				// Nothing here yet
+				squares[x][y]->animationTimer += elapsed.asSeconds();
+				if (squares[x][y]->animationTimer > 2.0) {
+					squares[x][y]->animationTimer -= 2.0;
+				}
 			}
 		}
 	}
@@ -43,6 +47,7 @@ void Grid::generateGrid(int jellyfish, int shells) {
 			squares[x][y] = std::make_shared<Square>();
 			squares[x][y]->spriteIndex = std::rand() % 4;
 			squares[x][y]->position = getPositionForSquare(x, y);
+			squares[x][y]->animationTimer = y * 0.1f + squares[x][y]->spriteIndex / 20.0f;
 		}
 	}
 
@@ -227,6 +232,24 @@ std::string Grid::popSquare(bool flagged) {
 	return "none";
 }
 
+void Grid::renderOverWater(sf::RenderTarget &target, sf::RenderStates states) const {
+	states.transform.translate(getPosition());
+
+	for (int x = 0; x < GRID_WIDTH; x++) {
+		for (int y = 0; y < GRID_HEIGHT; y++) {
+			if (squares[x][y]) {
+				if (squares[x][y]->flagged) {
+					// 7 from the flag wake's y position within the square
+					if (!squares[x][y]->dug && y * 10 + 7 > 120 - water->masterDepth) {
+						ra::renderFlagWake(target, states, squares[x][y]->position, squares[x][y]->animationTimer < 1.0f);
+					}
+					ra::renderFlagTop(target, states, squares[x][y]->position, squares[x][y]->dug);
+				}
+			}
+		}
+	}
+}
+
 void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 	states.transform.translate(getPosition());
 
@@ -288,9 +311,8 @@ void Grid::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 					}
 				}
 
-				// Draw flag
 				if (squares[x][y]->flagged) {
-					ra::renderFlag(target, states, squares[x][y]->position, squares[x][y]->dug);
+					ra::renderFlagBottom(target, states, squares[x][y]->position, squares[x][y]->dug);
 				}
 				else if (!squares[x][y]->dug && squares[x][y]->marked) {
 					ra::renderIcon(target, states, squares[x][y]->position, sf::Vector2f(0, 2), cm::getSandColor());

@@ -8,6 +8,8 @@
 const int GRID_WIDTH = 10;
 const int GRID_HEIGHT = 10;
 
+class Water;
+
 struct Square {
 	// What this block contains
 	// Can be "", "shell", "weed", "star", or "jelly"
@@ -21,6 +23,8 @@ struct Square {
 
 	// 0-3, purely cosmetic
 	int spriteIndex = 0;
+	// Animation control
+	float animationTimer = 0;
 	// The position to be rendered on the grid, affects click hitbox
 	sf::Vector2f position;
 	// The velocity of this square, affects position over time
@@ -89,6 +93,11 @@ public:
 	int totalJellies = 0;
 	// Amount of jellies unaccounted for via completed tabs
 	int hiddenJellies = 0;
+
+	// Used for animation control
+	Water *water = nullptr;
+
+	void renderOverWater(sf::RenderTarget &target, sf::RenderStates states = sf::RenderStates::Default) const;
 
 private:
 	virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
