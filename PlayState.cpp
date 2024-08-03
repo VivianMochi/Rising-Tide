@@ -39,11 +39,11 @@ void PlayState::init() {
 	buttonExit = createButton("Exit");
 	buttonSubmit = createButton("Submit");
 
-	buttonShellA = std::make_shared<Button>("Drain", rm::loadTexture("Resource/Image/SmallerButton.png"), sf::IntRect(0, 0, 38, 16));
+	buttonShellA = std::make_shared<Button>("Drain", rm::loadTexture("Resource/Image/Button38.png"), sf::IntRect(0, 0, 38, 16));
 	buttonShellA->showText = true;
 	buttons.initButton(buttonShellA);
 
-	buttonShellB = std::make_shared<Button>("$", rm::loadTexture("Resource/Image/SmallerButton.png"), sf::IntRect(0, 0, 38, 16));
+	buttonShellB = std::make_shared<Button>("$", rm::loadTexture("Resource/Image/Button38.png"), sf::IntRect(0, 0, 38, 16));
 	buttonShellB->showText = true;
 	buttons.initButton(buttonShellB);
 	
@@ -84,6 +84,8 @@ void PlayState::init() {
 	rightPane.setPosition(getGame()->gameSize.x, 0);
 	paletteSelect.setTexture(rm::loadTexture("Resource/Image/PalettePane.png"));
 	paletteSelect.setPosition(leftPane.getPosition() + sf::Vector2f(2, PALETTE_SELECT_TOP));
+	resultsPane.setTexture(rm::loadTexture("Resource/Image/ResultsPane.png"));
+	resultsPane.setPosition(-60, 17);
 
 	initEntity(title);
 
@@ -105,6 +107,10 @@ void PlayState::init() {
 	soundWater.setBuffer(rm::loadSoundBuffer("Resource/Sound/Water.wav"));
 	soundClick.setBuffer(rm::loadSoundBuffer("Resource/Sound/Click.wav"));
 	soundShopJingle.setBuffer(rm::loadSoundBuffer("Resource/Sound/ShopJingle.wav"));
+	soundPerfect.setBuffer(rm::loadSoundBuffer("Resource/Sound/Perfect.wav"));
+	soundDeposit.setBuffer(rm::loadSoundBuffer("Resource/Sound/Deposit.wav"));
+	soundDepositEnd.setBuffer(rm::loadSoundBuffer("Resource/Sound/DepositEnd.wav"));
+	soundDepositEndBest.setBuffer(rm::loadSoundBuffer("Resource/Sound/DepositEndBest.wav"));
 
 	// Load music
 	std::string song = "Tide";
@@ -212,8 +218,15 @@ void PlayState::gotEvent(sf::Event event) {
 			}
 			else if (phase == playing) {
 				if (clickedButton == "Submit") {
-					submit();
-					soundSelect.play();
+					// Only allow submission if a flag has been placed, to protect from accidental press
+					// Todo: This isn't intuitive and could lead to confusion
+					if (flags < levelFlagCount) {
+						submit();
+						soundSelect.play();
+					}
+					else {
+						soundError.play();
+					}
 				}
 				else if (clickedButton == "Drain") {
 					if (shells > 0) {
@@ -508,26 +521,119 @@ void PlayState::update(sf::Time elapsed) {
 	if (phase == submitting) {
 		submitTime -= elapsed.asSeconds();
 		if (submitTime <= 0) {
-			std::string popped = grid.popSquare(poppingFlags);
+			if (submitPhase == revealingBoard) {
+				std::string popped = grid.popSquare(poppingFlags);
 
-			findItem(popped, poppingFlags);
-			if (popped == "none") {
-				if (!poppingFlags) {
-					poppingFlags = true;
-					submitTime = SUBMIT_INTERVAL_BREAK;
+				findItem(popped, poppingFlags);
+				if (popped == "none") {
+					if (!poppingFlags) {
+						poppingFlags = true;
+						submitTime = SUBMIT_INTERVAL_BREAK;
+						resultsLines[0] = "$0/" + std::to_string(grid.totalJellies);
+					}
+					else {
+						submitPhase = gradeResult;
+						submitTime = SUBMIT_RESULTS_INTERVAL;
+
+						// Do grade text
+						if (jelliesScored == grid.totalJellies) {
+							resultsLines[1] = "Perfect";
+							//soundPerfect.play();
+
+							// Perfect bonus can come later, classic mode has no bonus
+							jellyMultiplier += 1.0;
+							//bonusJellies = 10;
+						}
+						else if (jelliesScored >= std::floor(grid.totalJellies / 2.0)) {
+							resultsLines[1] = "Nice";
+						}
+						else if (jelliesScored > 0) {
+							resultsLines[1] = "Ok";
+						}
+						else {
+							// Todo: this should probably be a fail state
+							resultsLines[1] = "...";
+						}
+					}
+				}
+				else if (popped == "jelly" || popped == "shell") {
+					submitTime = SUBMIT_INTERVAL_ITEM;
+					playDigSound();
 				}
 				else {
-					phase = results;
-					buttonSubmit->text = "Next";
+					submitTime = SUBMIT_INTERVAL;
+					playDigSound();
 				}
 			}
-			else if (popped == "jelly" || popped == "shell") {
-				submitTime = SUBMIT_INTERVAL_ITEM;
-				playDigSound();
+			else if (submitPhase == gradeResult) {
+				submitPhase = multiplierResult;
+				submitTime = SUBMIT_RESULTS_INTERVAL;
+
+				// Calculate multiplier here
+
+				// Skip if multiplier is 1.0
+				if (jellyMultiplier == 1.0) {
+					submitTime = 0;;
+				}
+				else {
+					// Otherwise update display
+					int whole = std::trunc(jellyMultiplier);
+					float decimal = jellyMultiplier - whole;
+					resultsLines[2] = "^" + std::to_string(whole) + "." + std::to_string(decimal).substr(2, 1);
+				}
 			}
-			else {
-				submitTime = SUBMIT_INTERVAL;
-				playDigSound();
+			else if (submitPhase == multiplierResult) {
+				submitPhase = totalResult;
+				submitTime = SUBMIT_RESULTS_INTERVAL;
+
+				// Calculate final score, always round up!
+				finalScore = std::ceil((jelliesScored + bonusJellies) * jellyMultiplier);
+				// Display score
+				resultsLines[3] = "$" + std::to_string(finalScore);
+			}
+			else if (submitPhase == totalResult) {
+				submitPhase = depositResult;
+				submitTime = 0.85;
+				soundDeposit.play();
+
+				// Calculate run score, and prep score effect
+				finalRunScore = score + finalScore;
+				scoreChangeInterval = (0.85 + 0.1) / finalScore;
+				scoreChangeTimer = 0;
+				flashTime = 0;
+				scoreFlashTime = 0.85;
+			}
+			else if (submitPhase == depositResult) {
+				phase = results;
+				buttonSubmit->text = "Next";
+				soundDeposit.stop();
+
+				// End any score effect and update best score
+				score = finalRunScore;
+				flashTime = 0;
+				scoreFlashTime = 1;
+
+				if (score > saveData[best]) {
+					saveData[best] = score;
+					bestFlashTime = 1;
+
+					// Save best score
+					save();
+
+					soundDepositEndBest.play();
+				}
+				else {
+					soundDepositEnd.play();
+				}
+			}
+		}
+
+		// Do score incrementing effect
+		if (phase == submitting && submitPhase == depositResult) {
+			scoreChangeTimer -= elapsed.asSeconds();
+			if (scoreChangeTimer <= 0 && score < finalRunScore - 1) {
+				scoreChangeTimer += scoreChangeInterval;
+				score += 1;
 			}
 		}
 	}
@@ -574,6 +680,13 @@ void PlayState::update(sf::Time elapsed) {
 	}
 	rightPane.move((sf::Vector2f(desiredX, 0) - rightPane.getPosition()) * elapsed.asSeconds() * 5.0f);
 	rightPane.setColor(cm::getUIColor());
+
+	desiredX = -60;
+	if (phase == submitting && poppingFlags || phase == results) {
+		desiredX = 2;
+	}
+	resultsPane.move((sf::Vector2f(desiredX, 17) - resultsPane.getPosition()) * elapsed.asSeconds() * 8.0f);
+	resultsPane.setColor(cm::getWaterColor());
 
 	// Update water bar
 	waterBar.update(elapsed);
@@ -703,6 +816,10 @@ void PlayState::update(sf::Time elapsed) {
 	soundWater.setVolume(100 * soundVolumeModifier);
 	soundClick.setVolume(100 * soundVolumeModifier);
 	soundShopJingle.setVolume(100 * soundVolumeModifier);
+	soundPerfect.setVolume(100 * soundVolumeModifier);
+	soundDeposit.setVolume(100 * soundVolumeModifier);
+	soundDepositEnd.setVolume(100 * soundVolumeModifier);
+	soundDepositEndBest.setVolume(100 * soundVolumeModifier);
 
 	// Update background position
 	title.setPosition(getGame()->gameSize.x / 2 - 103 / 2, menuPaneY + 18);
@@ -728,7 +845,7 @@ void PlayState::render(sf::RenderWindow &window) {
 	text.setTexture(rm::loadTexture("Resource/Image/Font.png"));
 	text.setColor(cm::getUIColorDark());
 
-	// Render panes
+	// Render left pane
 	window.draw(leftPane);
 	sf::Sprite leftDetails(rm::loadTexture("Resource/Image/JellyDetails.png"), sf::IntRect(0, 0, 60, 135));
 	leftDetails.setColor(cm::getUIColorMediumDetail());
@@ -742,6 +859,7 @@ void PlayState::render(sf::RenderWindow &window) {
 	ra::renderFlag(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(4, 50));
 	ra::renderShell(window, sf::RenderStates::Default, leftPane.getPosition() + sf::Vector2f(3, 65));
 
+	// Render right pane
 	window.draw(rightPane);
 	sf::Sprite rightDetails(rm::loadTexture("Resource/Image/JellyDetails.png"), sf::IntRect(60, 0, 60, 135));
 	rightDetails.setColor(cm::getUIColorMediumDetail());
@@ -934,6 +1052,32 @@ void PlayState::render(sf::RenderWindow &window) {
 		window.draw(text);
 	}
 
+	// Render results pane
+	window.draw(resultsPane);
+	if (resultsPane.getPosition().x > -58) {
+		// Render results numbers
+		text.setColor(cm::getResultsTextColor(false));
+		text.setText(resultsLines[0]);
+		text.setPosition(resultsPane.getPosition() + sf::Vector2f(28 - text.getWidth() / 2, 16));
+		window.draw(text);
+		if (submitPhase >= gradeResult) {
+			text.setText(resultsLines[1]);
+			text.setPosition(resultsPane.getPosition() + sf::Vector2f(28 - text.getWidth() / 2, 29));
+			window.draw(text);
+		}
+		if (submitPhase >= multiplierResult) {
+			text.setText(resultsLines[2]);
+			text.setPosition(resultsPane.getPosition() + sf::Vector2f(28 - text.getWidth() / 2, 42));
+			window.draw(text);
+		}
+		if (submitPhase >= totalResult) {
+			text.setText(resultsLines[3]);
+			text.setPosition(resultsPane.getPosition() + sf::Vector2f(28 - text.getWidth() / 2, 55));
+			text.setColor(cm::getResultsTextColor(true));
+			window.draw(text);
+		}
+	}
+
 	// Render the aquarium
 	window.draw(*aquarium);
 
@@ -1099,20 +1243,13 @@ void PlayState::loadLevel(int level) {
 void PlayState::findItem(std::string item, bool flagged) {
 	if (item == "jelly") {
 		if (flagged) {
-			score += 1;
-			if (score > saveData[best]) {
-				saveData[best] = score;
-				bestFlashTime = 1;
-
-				// Save best score
-				save();
-			}
-			flashTime = 0;
-			scoreFlashTime = 1;
+			jelliesScored += 1;
+			resultsLines[0] = "$" + std::to_string(jelliesScored) + "/" + std::to_string(grid.totalJellies);
 			soundScore.play();
 		}
 		else {
 			waterBar.flood(3);
+			water.turbulence = 1;
 			if (saveData[settingShake]) {
 				getGame()->screenShakeTime = 0.05;
 			}
@@ -1131,8 +1268,17 @@ void PlayState::findItem(std::string item, bool flagged) {
 
 void PlayState::submit() {
 	phase = submitting;
+	submitPhase = revealingBoard;
 	poppingFlags = false;
 	submitTime = SUBMIT_INTERVAL;
+
+	// Reset scoring stuff
+	jelliesScored = 0;
+	bonusJellies = 0;
+	jellyMultiplier = 1.0;
+	finalScore = 0;
+	resultsLines.clear();
+	resultsLines.resize(4);
 }
 
 void PlayState::goToMenu() {

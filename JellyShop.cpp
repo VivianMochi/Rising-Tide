@@ -36,7 +36,7 @@ void JellyShop::init() {
 
 	buttonMenu = std::make_shared<Button>("Menu", rm::loadTexture("Resource/Image/MenuButton.png"), sf::IntRect(0, 0, 41, 16));
 	buttons.initButton(buttonMenu);
-	buttonBuy = std::make_shared<Button>("Buy", rm::loadTexture("Resource/Image/BuyButton.png"), sf::IntRect(0, 0, 40, 16));
+	buttonBuy = std::make_shared<Button>("Buy", rm::loadTexture("Resource/Image/Button40.png"), sf::IntRect(0, 0, 40, 16));
 	buttonBuy->showText = true;
 	buttons.initButton(buttonBuy);
 	buttonSettings = std::make_shared<Button>("Settings", rm::loadTexture("Resource/Image/SettingsButton.png"), sf::IntRect(0, 0, 13, 16));

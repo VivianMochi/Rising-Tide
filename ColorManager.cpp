@@ -142,6 +142,15 @@ sf::Color cm::getCloudColor() {
 	return getPaletteColor(2);
 }
 
+sf::Color cm::getResultsTextColor(bool dark) {
+	sf::Color output = cm::getWaterColor();
+	int strength = dark ? 24 : 42;
+	output.r *= strength / 100.0f;
+	output.g *= strength / 100.0f;
+	output.b *= strength / 100.0f;
+	return output;
+}
+
 sf::Color cm::adjustColor(sf::Color input, sf::Color desired, float amount) {
 	float r = adjustComponent(input.r, desired.r, amount);
 	float g = adjustComponent(input.g, desired.g, amount);

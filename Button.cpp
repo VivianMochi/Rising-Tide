@@ -7,7 +7,7 @@
 
 Button::Button(std::string text) {
 	this->text = text;
-	buttonSprite.setTexture(rm::loadTexture("Resource/Image/Button.png"));
+	buttonSprite.setTexture(rm::loadTexture("Resource/Image/Button56.png"));
 	baseRect = sf::IntRect(0, 0, 56, 16);
 }
 

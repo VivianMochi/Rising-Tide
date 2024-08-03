@@ -39,6 +39,7 @@ namespace cm {
 	sf::Color getUIColor();
 	sf::Color getSandColor();
 	sf::Color getCloudColor();
+	sf::Color getResultsTextColor(bool dark);
 
 	sf::Color adjustColor(sf::Color input, sf::Color desired, float amount);
 	float adjustComponent(float input, float desired, float amount);

@@ -22,6 +22,7 @@ const int GRID_LEFT = 70;
 const float SUBMIT_INTERVAL = 0.1;
 const float SUBMIT_INTERVAL_ITEM = 0.3;
 const float SUBMIT_INTERVAL_BREAK = 1;
+const float SUBMIT_RESULTS_INTERVAL = 0.5;
 const float PALETTE_SELECT_TOP = 82;
 const float PALETTE_BUTTONS_TOP = PALETTE_SELECT_TOP + 25;
 
@@ -67,6 +68,13 @@ public:
 		loss,
 		shopping,
 	} phase = menu;
+	enum {
+		revealingBoard,
+		gradeResult,
+		multiplierResult,
+		totalResult,
+		depositResult,
+	} submitPhase = revealingBoard;
 	bool settingsOpen = false;
 
 	ModeOptions options;
@@ -133,6 +141,18 @@ private:
 	float levelTime = 0;
 	bool levelTimeTicking = false;
 
+	// Results stuff
+	int jelliesScored = 0;
+	int bonusJellies = 0;
+	float jellyMultiplier = 1.0;
+	int finalScore = 0;
+	std::vector<std::string> resultsLines;
+
+	// Score update effects
+	float scoreChangeInterval = 0.1;
+	float scoreChangeTimer = 0;
+	int finalRunScore = 0;
+
 	// Player stats
 	int score = 0;
 	int shells = 0;
@@ -168,6 +188,7 @@ private:
 	sf::Sprite leftPane;
 	sf::Sprite rightPane;
 	sf::Sprite paletteSelect;
+	sf::Sprite resultsPane;
 	WaterBar waterBar;
 	
 	Title title;
@@ -188,6 +209,10 @@ private:
 	sf::Sound soundWater;
 	sf::Sound soundClick;
 	sf::Sound soundShopJingle;
+	sf::Sound soundPerfect;
+	sf::Sound soundDeposit;
+	sf::Sound soundDepositEnd;
+	sf::Sound soundDepositEndBest;
 
 	sf::Music musicBase;
 	sf::Music musicActive;
