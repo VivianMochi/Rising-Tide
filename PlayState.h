@@ -12,6 +12,7 @@
 #include "Aquarium.h"
 #include "SettingsTab.h"
 #include "Title.h"
+#include "Ocean.h"
 #include <SFML/Audio.hpp>
 #include <map>
 
@@ -30,7 +31,6 @@ const bool NEW_MODE = true;
 
 const bool DEBUG_ENABLED = true;
 const bool PALETTE_SELECT_DEBUG_ENABLED = false;
-const bool DEBUG_MUSIC_DISABLED = false;
 const bool DEBUG_DEMO_MODE = false;
 
 // SaveData keys
@@ -61,13 +61,15 @@ public:
 	void load();
 
 	enum {
+		fade,
+		intro,
 		menu,
 		playing,
 		submitting,
 		results,
 		loss,
 		shopping,
-	} phase = menu;
+	} phase = fade;
 	enum {
 		revealingBoard,
 		gradeResult,
@@ -98,6 +100,10 @@ private:
 	void toggleSettingsTab();
 	void adjustSetting(std::string setting, int newValue);
 
+	// Phase helpers
+	void startIntro();
+	void endIntro();
+
 	// Action logic
 	// Attempts to dig the square under the cursor
 	void doDigLogic();
@@ -110,9 +116,10 @@ private:
 	// Returns false if a removal happened
 	bool doMarkLogic(bool toggle = true);
 
-	float cameraY = -25;
-	float menuPaneY = 0;
+	float cameraY = -135;
+	float menuPaneY = 135;
 
+	float introTime = 1;
 	float flashTime = 0;
 	float flagFlashTime = 0;
 	float scoreFlashTime = 0;
@@ -191,7 +198,9 @@ private:
 	sf::Sprite resultsPane;
 	WaterBar waterBar;
 	
+	sf::Sprite splashLogo;
 	Title title;
+	Ocean ocean;
 	sf::Sprite sun;
 	sf::Sprite clouds;
 	sf::Sprite dunes;
@@ -219,5 +228,6 @@ private:
 	sf::Music musicBeat;
 	sf::Music musicWarning;
 	sf::Music musicShop;
+	sf::Music musicAmbience;
 };
 

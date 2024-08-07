@@ -1,0 +1,51 @@
+uniform sampler2D texture;
+uniform sampler2D noise;
+uniform float time;
+
+void main()
+{
+    // Calculate the offset
+    vec2 offset;
+    offset.x = 0;
+    offset.y = 0;
+
+    // Constant scrolling, looks good but need to make sure textures repeat nicely
+    //offset.x = time * 0.02;
+    offset.x += 0.02 * cos(time * 0.9 + (1 - gl_TexCoord[0].y) * 20.0);
+    
+    //offset.y = 0.1;
+    offset.y += 0.07 * sin(gl_TexCoord[0].x * 3.14159);
+    offset.y += 0.01 * cos(time * 0.5 + gl_TexCoord[0].x * 20);
+
+    // Noise displacement
+    offset += texture2D(noise, gl_TexCoord[0].xy + vec2(time * 0.05, time * 0.05)).rg * 0.05;
+
+    // Cut at shore
+    if (gl_TexCoord[0].y < offset.y) {
+        discard;
+    }
+
+    // Flip offset.y to look upward
+    offset.y = -offset.y;
+    
+    // Determine the target position
+    vec2 targetTexturePosition = gl_TexCoord[0].xy + offset.xy;
+
+    // Lookup the pixel in the textures
+    vec4 pixel = texture2D(texture, targetTexturePosition);
+
+    // Testing anti-aliasing
+    /*
+    float nearbyAlpha = texture2D(texture, targetTexturePosition + vec2(0, 1/140.0)).a;
+    nearbyAlpha += texture2D(texture, targetTexturePosition + vec2(0, -1/140.0)).a;
+    nearbyAlpha += texture2D(texture, targetTexturePosition + vec2(1/240.0, 0)).a;
+    nearbyAlpha += texture2D(texture, targetTexturePosition + vec2(-1/240.0, 0)).a;
+    nearbyAlpha /= 4.0;
+    if (nearbyAlpha >= 0.5) {
+        pixel.a = max(pixel.a, 0.5);
+    }
+    */
+
+    // multiply it by the color
+    gl_FragColor = gl_Color * pixel;
+}

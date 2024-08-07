@@ -87,7 +87,11 @@ void PlayState::init() {
 	resultsPane.setTexture(rm::loadTexture("Resource/Image/ResultsPane.png"));
 	resultsPane.setPosition(-60, 17);
 
+	splashLogo.setTexture(rm::loadTexture("Resource/Image/SplashLogo.png"));
+	splashLogo.setPosition(sf::Vector2f(getGame()->gameSize / 2) + sf::Vector2f(-44, -9));
+
 	initEntity(title);
+	title.setPosition(0, 135);
 
 	sun.setTexture(rm::loadTexture("Resource/Image/Sun.png"));
 	clouds.setTexture(rm::loadTexture("Resource/Image/Clouds.png"));
@@ -115,30 +119,21 @@ void PlayState::init() {
 	// Load music
 	std::string song = "Tide";
 	musicBase.openFromFile("Resource/Music/" + song + "0.ogg");
-	musicBase.setVolume(100 * std::pow(saveData[settingMusic] / 9.0f, 2));
 	musicBase.setLoop(true);
-
 	musicActive.openFromFile("Resource/Music/" + song + "1.ogg");
-	musicActive.setVolume(0);
 	musicActive.setLoop(true);
-
 	musicBeat.openFromFile("Resource/Music/" + song + "2.ogg");
-	musicBeat.setVolume(0);
 	musicBeat.setLoop(true);
-
 	musicWarning.openFromFile("Resource/Music/" + song + "3.ogg");
-	musicWarning.setVolume(0);
 	musicWarning.setLoop(true);
-
 	musicShop.openFromFile("Resource/Music/Shop.ogg");
 	musicShop.setLoop(true);
+	musicAmbience.openFromFile("Resource/Music/OceanAmbience.ogg");
+	musicAmbience.setVolume(0);
+	musicAmbience.setLoop(true);
 
-	if (!DEBUG_MUSIC_DISABLED) {
-		musicBase.play();
-		musicActive.play();
-		musicBeat.play();
-		musicWarning.play();
-	}
+	// Start ambience
+	musicAmbience.play();
 }
 
 void PlayState::gotEvent(sf::Event event) {
@@ -147,6 +142,22 @@ void PlayState::gotEvent(sf::Event event) {
 		heldAction = noAction;
 
 		if (event.mouseButton.button == sf::Mouse::Left) {
+			// Sequence skipping
+			if (phase == fade) {
+				startIntro();
+				introTime = 1.3;
+			}
+			else if (phase == intro) {
+				if (introTime > 1.7) {
+					introTime = 1.3;
+				}
+				else {
+					endIntro();
+					cameraY = -25;
+					menuPaneY = 0;
+				}
+			}
+
 			// Check buttons
 			std::string clickedButton = buttons.clickPosition(getGame()->getCursorPosition());
 
@@ -465,6 +476,25 @@ void PlayState::update(sf::Time elapsed) {
 			}
 		}
 	}
+	if (phase == fade) {
+		introTime -= elapsed.asSeconds() * 0.5;
+		if (introTime <= 0) {
+			startIntro();
+		}
+	}
+	else if (phase == intro) {
+		if (introTime > 1) {
+			// First section, splash
+			introTime -= elapsed.asSeconds() * 0.3;
+		}
+		else if (introTime > 0) {
+			// Panning down to menu
+			introTime -= elapsed.asSeconds() * 0.5;
+		}
+		else {
+			endIntro();
+		}
+	}
 	flashTime += elapsed.asSeconds();
 	if (flashTime >= 0.2) {
 		flashTime = 0;
@@ -505,14 +535,31 @@ void PlayState::update(sf::Time elapsed) {
 
 	// Update camera position
 	float desiredY = 0;
-	if (phase == menu) {
+	if (phase == fade) {
+		desiredY = -135;
+	}
+	else if (phase == intro) {
+		if (introTime > 1) {
+			desiredY = -135;
+		}
+		else {
+			desiredY = -135 * introTime + -25 * (1 - introTime);
+		}
+	}
+	else if (phase == menu) {
 		desiredY = -25;
 	}
 	approachNumber(cameraY, desiredY, elapsed.asSeconds() * 2);
 
 	// Update main menu pane
 	desiredY = -135;
-	if (phase == menu) {
+	if (phase == fade) {
+		desiredY = 135;
+	}
+	else if (phase == intro) {
+		desiredY = std::min(135 * introTime, 135.0f);
+	}
+	else if (phase == menu) {
 		desiredY = 0;
 	}
 	approachNumber(menuPaneY, desiredY, elapsed.asSeconds() * 5);
@@ -640,9 +687,6 @@ void PlayState::update(sf::Time elapsed) {
 
 	const bool inGame = (phase == playing || phase == submitting || phase == results || phase == loss);
 
-	// Update title
-	title.update(elapsed);
-
 	// Update shop
 	shop.update(elapsed);
 
@@ -713,7 +757,8 @@ void PlayState::update(sf::Time elapsed) {
 	buttonMenu->setPosition(leftPane.getPosition() + sf::Vector2f(2, 117));
 	buttonMenu->enabled = buttonsActive;
 	float settingsX = std::max(leftPane.getPosition().x + 45, 2.0f);
-	buttonSettings->setPosition(sf::Vector2f(settingsX, 117));
+	float settingsY = phase == menu || phase == fade || phase == intro ? std::max(menuPaneY + 117, 117.0f) : 117;
+	buttonSettings->setPosition(sf::Vector2f(settingsX, settingsY));
 	buttonSettings->enabled = buttonsActive && phase != shopping;
 	buttonShellA->setPosition(rightPane.getPosition() + sf::Vector2f(31, 99));
 	buttonShellA->enabled = shells > 0 && buttonsActive;
@@ -820,15 +865,35 @@ void PlayState::update(sf::Time elapsed) {
 	soundDeposit.setVolume(100 * soundVolumeModifier);
 	soundDepositEnd.setVolume(100 * soundVolumeModifier);
 	soundDepositEndBest.setVolume(100 * soundVolumeModifier);
+	adjustMusicVolume(musicAmbience, phase == fade || phase == intro || phase == menu ? 100 * soundVolumeModifier : 0, elapsed.asSeconds());
 
 	// Update background position
 	title.setPosition(getGame()->gameSize.x / 2 - 103 / 2, menuPaneY + 18);
-	sun.setPosition(141, -1 - cameraY * 0.9);
+	sun.setPosition(141, std::round(-1 - cameraY * 0.9));
 	sun.setColor(cm::getFlashColor());
-	clouds.setPosition(0, -25 - cameraY * 0.9);
+	clouds.setPosition(0, std::round(-125 - cameraY * 0.9));
 	clouds.setColor(cm::getCloudColor());
-	dunes.setPosition(0, -25 - cameraY);
+	dunes.setPosition(0, std::round(-25 - cameraY));
 	dunes.setColor(cm::getSandColor());
+	ocean.setPosition(0, std::round(40 - cameraY * 1.2));
+
+	// Update title
+	title.update(elapsed);
+
+	// Update ocean
+	ocean.update(elapsed);
+
+	// Update splash logo
+	if (phase == intro) {
+		sf::Color logoColor = cm::getJellyColor();
+		if (introTime > 1) {
+			logoColor.a = std::clamp((1 - (introTime - 1)) * 3, 0.0f, 1.0f) * 255;
+		}
+		else {
+			logoColor.a = std::clamp((introTime - 0.65f) * 3, 0.0f, 1.0f) * 255;
+		}
+		splashLogo.setColor(logoColor);
+	}
 }
 
 void PlayState::render(sf::RenderWindow &window) {
@@ -839,7 +904,17 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(sun);
 	window.draw(clouds);
 	window.draw(dunes);
+	window.draw(ocean);
 	window.draw(title);
+
+	if (phase == fade) {
+		sf::RectangleShape fadeSprite(sf::Vector2f(getGame()->gameSize));
+		fadeSprite.setFillColor(sf::Color(255, 255, 255, introTime * 255));
+		window.draw(fadeSprite);
+	}
+	else if (phase == intro) {
+		window.draw(splashLogo);
+	}
 
 	BitmapText text;
 	text.setTexture(rm::loadTexture("Resource/Image/Font.png"));
@@ -1314,6 +1389,28 @@ void PlayState::adjustSetting(std::string setting, int newValue) {
 			getGame()->screenShakeTime = 0.05;
 		}
 	}
+}
+
+void PlayState::startIntro() {
+	introTime = 2;
+	phase = intro;
+
+	// Set music volumes
+	musicBase.setVolume(0);
+	musicActive.setVolume(0);
+	musicBeat.setVolume(0);
+	musicWarning.setVolume(0);
+
+	// Start music
+	musicBase.play();
+	musicActive.play();
+	musicBeat.play();
+	musicWarning.play();
+}
+
+void PlayState::endIntro() {
+	introTime = 0;
+	phase = menu;
 }
 
 void PlayState::doDigLogic() {
