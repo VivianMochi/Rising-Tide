@@ -13,6 +13,7 @@
 #include "SettingsTab.h"
 #include "Title.h"
 #include "Ocean.h"
+#include "ParticleSystem.h"
 #include <SFML/Audio.hpp>
 #include <map>
 
@@ -204,6 +205,8 @@ private:
 	sf::Sprite sun;
 	sf::Sprite clouds;
 	sf::Sprite dunes;
+
+	ParticleSystem particles;
 
 	sf::Sound soundDig;
 	sf::Sound soundFlag;

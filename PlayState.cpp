@@ -202,6 +202,7 @@ void PlayState::gotEvent(sf::Event event) {
 					soundStart.play();
 					phase = playing;
 					loadLevel(0);
+					particles.clearParticles();
 				}
 				else if (clickedButton == "Shop") {
 					phase = shopping;
@@ -210,6 +211,7 @@ void PlayState::gotEvent(sf::Event event) {
 					soundShopJingle.play();
 					musicShop.stop();
 					shopMusicDelayTime = 1.71;
+					particles.clearParticles();
 				}
 				else if (clickedButton == "Exit") {
 					getGame()->exit();
@@ -883,6 +885,15 @@ void PlayState::update(sf::Time elapsed) {
 	// Update ocean
 	ocean.update(elapsed);
 
+	// Ocean sparkles
+	if (phase == menu && std::rand() % 8 == 0) {
+		sf::Vector2f particlePosition(std::rand() % 240, ocean.getPosition().y + 30 + std::rand() % 33);
+		particles.createParticle(particlePosition, sf::Vector2f(), 1, cm::getFlashColor());
+	}
+
+	// Update particles
+	particles.update(elapsed);
+
 	// Update splash logo
 	if (phase == intro) {
 		sf::Color logoColor = cm::getJellyColor();
@@ -1077,6 +1088,9 @@ void PlayState::render(sf::RenderWindow &window) {
 		text.setColor(cm::getUIColorDark());
 		window.draw(text);
 	}
+
+	// Render particle system
+	window.draw(particles);
 
 	window.draw(waterBar);
 	window.draw(buttons);

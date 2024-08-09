@@ -106,7 +106,7 @@ void Aquarium::update(sf::Time elapsed) {
 	}
 	// Add new particle
 	if (std::rand() % 2 == 0) {
-		Particle particle;
+		AquariumParticle particle;
 		particle.position = sf::Vector2f(size.x * (std::rand() % 100) / 100.0f,
 			size.y * (std::rand() % 100) / 100.0f);
 		particle.velocity = getFlow(particle.position);

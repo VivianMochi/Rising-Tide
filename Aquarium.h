@@ -8,7 +8,7 @@
 const int AQUARIUM_TOP_BUFFER = 20;
 const float AQUARIUM_MAX_FLOW = 10;
 
-struct Particle {
+struct AquariumParticle {
 	sf::Vector2f position;
 	sf::Vector2f velocity;
 	float lifespan = 0;
@@ -43,7 +43,7 @@ private:
 	std::vector<std::vector<sf::Vector2f>> flow;
 
 	std::map<std::string, std::shared_ptr<Jelly>> jellies;
-	std::vector<Particle> particles;
+	std::vector<AquariumParticle> particles;
 
 	Water water;
 };
