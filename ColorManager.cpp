@@ -143,7 +143,7 @@ sf::Color cm::getCloudColor() {
 }
 
 sf::Color cm::getResultsTextColor(bool dark) {
-	sf::Color output = cm::getWaterColor();
+	sf::Color output = cm::getJellyColor();
 	int strength = dark ? 24 : 42;
 	output.r *= strength / 100.0f;
 	output.g *= strength / 100.0f;

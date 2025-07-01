@@ -89,6 +89,7 @@ private:
 	void approachNumber(float &input, float desired, float factor);
 	sf::Vector2i getGridSquareFromCursorPosition();
 
+	void startMusic();
 	void adjustMusicVolume(sf::Music &music, float desiredVolume, float factor);
 	void playDigSound();
 
@@ -102,7 +103,7 @@ private:
 	void adjustSetting(std::string setting, int newValue);
 
 	// Phase helpers
-	void startIntro();
+	void startIntro(bool playSound = true);
 	void endIntro();
 
 	// Action logic
@@ -225,6 +226,7 @@ private:
 	sf::Sound soundDeposit;
 	sf::Sound soundDepositEnd;
 	sf::Sound soundDepositEndBest;
+	sf::Sound soundSplash;
 
 	sf::Music musicBase;
 	sf::Music musicActive;

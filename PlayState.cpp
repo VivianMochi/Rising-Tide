@@ -115,6 +115,7 @@ void PlayState::init() {
 	soundDeposit.setBuffer(rm::loadSoundBuffer("Resource/Sound/Deposit.wav"));
 	soundDepositEnd.setBuffer(rm::loadSoundBuffer("Resource/Sound/DepositEnd.wav"));
 	soundDepositEndBest.setBuffer(rm::loadSoundBuffer("Resource/Sound/DepositEndBest.wav"));
+	soundSplash.setBuffer(rm::loadSoundBuffer("Resource/Sound/Mochi.wav"));
 
 	// Load music
 	std::string song = "Tide";
@@ -144,7 +145,7 @@ void PlayState::gotEvent(sf::Event event) {
 		if (event.mouseButton.button == sf::Mouse::Left) {
 			// Sequence skipping
 			if (phase == fade) {
-				startIntro();
+				startIntro(false);
 				introTime = 1.3;
 			}
 			else if (phase == intro) {
@@ -481,13 +482,19 @@ void PlayState::update(sf::Time elapsed) {
 	if (phase == fade) {
 		introTime -= elapsed.asSeconds() * 0.5;
 		if (introTime <= 0) {
-			startIntro();
+			startIntro(true);
 		}
 	}
 	else if (phase == intro) {
 		if (introTime > 1) {
-			// First section, splash
-			introTime -= elapsed.asSeconds() * 0.3;
+			// First section, fade splash logo
+			// This factor controls how fast it goes
+			introTime -= elapsed.asSeconds() * 0.4;
+
+			// Start the music right when the camera pan begins, rather than waiting for state change
+			if (introTime <= 1) {
+				startMusic();
+			}
 		}
 		else if (introTime > 0) {
 			// Panning down to menu
@@ -732,7 +739,7 @@ void PlayState::update(sf::Time elapsed) {
 		desiredX = 2;
 	}
 	resultsPane.move((sf::Vector2f(desiredX, 17) - resultsPane.getPosition()) * elapsed.asSeconds() * 8.0f);
-	resultsPane.setColor(cm::getWaterColor());
+	resultsPane.setColor(cm::getJellyColor());
 
 	// Update water bar
 	waterBar.update(elapsed);
@@ -867,6 +874,7 @@ void PlayState::update(sf::Time elapsed) {
 	soundDeposit.setVolume(100 * soundVolumeModifier);
 	soundDepositEnd.setVolume(100 * soundVolumeModifier);
 	soundDepositEndBest.setVolume(100 * soundVolumeModifier);
+	soundSplash.setVolume(100 * soundVolumeModifier);
 	adjustMusicVolume(musicAmbience, phase == fade || phase == intro || phase == menu ? 100 * soundVolumeModifier : 0, elapsed.asSeconds());
 
 	// Update background position
@@ -953,6 +961,7 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(rightDetails);
 
 	// Render section title
+	text.setColor(cm::getUIColor());
 	text.setText(levelName);
 	text.setPosition(leftPane.getPosition() + sf::Vector2f(35 - text.getWidth() / 2, 5));
 	window.draw(text);
@@ -963,6 +972,7 @@ void PlayState::render(sf::RenderWindow &window) {
 	window.draw(text);
 
 	// Jelly count
+	text.setColor(cm::getUIColorDark());
 	text.setText(std::to_string(grid.hiddenJellies));
 	text.setPosition(leftPane.getPosition() + sf::Vector2f(28 - text.getWidth() / 2, 34));
 	window.draw(text);
@@ -1257,6 +1267,22 @@ sf::Vector2i PlayState::getGridSquareFromCursorPosition() {
 	return output;
 }
 
+void PlayState::startMusic() {
+	if (musicBase.getStatus() != sf::Music::Playing) {
+		// Set music volumes
+		musicBase.setVolume(0);
+		musicActive.setVolume(0);
+		musicBeat.setVolume(0);
+		musicWarning.setVolume(0);
+
+		// Start music
+		musicBase.play();
+		musicActive.play();
+		musicBeat.play();
+		musicWarning.play();
+	}
+}
+
 void PlayState::adjustMusicVolume(sf::Music &music, float desiredVolume, float factor) {
 	float volume = music.getVolume();
 	volume += (desiredVolume - volume) * factor;
@@ -1405,26 +1431,22 @@ void PlayState::adjustSetting(std::string setting, int newValue) {
 	}
 }
 
-void PlayState::startIntro() {
+void PlayState::startIntro(bool playSound) {
 	introTime = 2;
 	phase = intro;
 
-	// Set music volumes
-	musicBase.setVolume(0);
-	musicActive.setVolume(0);
-	musicBeat.setVolume(0);
-	musicWarning.setVolume(0);
-
-	// Start music
-	musicBase.play();
-	musicActive.play();
-	musicBeat.play();
-	musicWarning.play();
+	// Play logo splash sound
+	if (playSound) {
+		soundSplash.play();
+	}
 }
 
 void PlayState::endIntro() {
 	introTime = 0;
 	phase = menu;
+
+	// Also start the music if it didn't already start
+	startMusic();
 }
 
 void PlayState::doDigLogic() {
